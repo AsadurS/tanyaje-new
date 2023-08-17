@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Template;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use App\Models\Core\MerchantBranch;
+use App\Models\Core\TrafficItem;
+use App\Models\Core\TrafficOrganisation;
+use App\Models\Core\TrafficSa;
+use App\Models\Core\TrafficPromotion;
+use App\Models\Core\TrafficCampaign;
+
+class TrafficController
+{
+    public static function traffic($event = "visit"){
+        // visitor report & tracking
+        if($event == "visit"){
+            $currentURL = url()->full();
+        }
+        elseif($event == "promotion_click"){
+            $currentURL = url()->full();
+        }
+        else{
+            $currentURL = url()->previous();
+        }
+
+        $pieces = explode("/", $currentURL);
+        if(count($pieces) > 3){
+            if($pieces[3] == "sale-advisor" ){
+
+                // main data
+                $host = $_SERVER['HTTP_HOST'];
+                $ua = $_SERVER['HTTP_USER_AGENT']; 
+                if(!empty($_SERVER['HTTP_CLIENT_IP'])){
+                    //ip from share internet
+                    $visitor_ip = $_SERVER['HTTP_CLIENT_IP'];
+                }elseif(!empty($_SERVER['HTTP_X_FORWARDED_FOR'])){
+                    //ip pass from proxy
+                    $visitor_ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+                }else{
+                    $visitor_ip = $_SERVER['REMOTE_ADDR'];
+                }
+    
+                // get org_id
+                $org_name = $pieces[4];
+                $organisation_data = str_replace("-","%",$org_name);
+                $organisation = DB::table('users')->where('company_name','LIKE', $organisation_data)->latest()->first();
+    
+                // get sa_id
+                $sa_slug = $pieces[5];
+                $sa_slug = str_replace(["?", "&"], "", urldecode($sa_slug));
+                
+                if(!empty($organisation)){
+                    $sa = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+                    
+                    if(count($sa) == null){
+                        $organisation_data2 = str_replace("-"," ",$org_name);
+                        $organisation = DB::table('users')->where('company_name','=', $organisation_data2)->latest()->first();
+                        if(!empty($organisation)){
+                            $sa = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                            ->where('merchant_branch.user_id','=',$organisation->id)
+                            ->get();
+                        }
+                    }
+                    $org_id = $organisation->id;
+                    $sa_id = $sa[0]->id;
+                }
+                else{
+                    $org_id = '';
+                    $sa_id = '';
+                }
+
+                if($event == ''){
+                    $event = 'visit';
+                }
+
+                // tune for campaign
+                if (strpos($currentURL, '/campaign/') !== false) {
+                    $event = 'campaign_click';
+                }
+
+                $data = array(
+                    'url'               => $currentURL,
+                    'visitor_ip'        => $visitor_ip,
+                    'user_agent' 		=> $ua,
+                    'host'              => $host,
+                    // 'organisation_id'   => $org_id,
+                    // 'sa_id'		        => $sa_id,
+                    'event_type'        => $event,
+                    'created_at'        => date('Y-m-d H:i:s')
+                );
+                $insert_data[] = $data; 
+                if(!empty($insert_data)){
+                    $traffic_id = DB::table('traffics')->insert($insert_data);
+                    $traffic_id = DB::getPdo()->lastInsertId();
+
+                    // check got organisation id
+                    if($org_id != null){
+                        $traffic_org = new TrafficOrganisation;
+                        $traffic_org->traffic_id = $traffic_id;
+                        $traffic_org->organisation_id = $org_id;
+                        $traffic_org->save();
+                    }
+                    // check got sa id
+                    if($sa_id != null){
+                        $traffic_sa = new TrafficSa;
+                        $traffic_sa->traffic_id = $traffic_id;
+                        $traffic_sa->sa_id = $sa_id;
+                        $traffic_sa->save();
+                    }
+                    // check got item id
+                    if (strpos($currentURL, '/show/item_detail/') !== false) {
+                        $item_id = $pieces[8];
+                        $traffic_item = new TrafficItem;
+                        $traffic_item->traffic_id = $traffic_id;
+                        $traffic_item->item_id = $item_id;
+                        $traffic_item->save();
+                    }
+                    // check got promotion id
+                    $promo_id = '';
+                    if($promo_id != null){
+                        $traffic_promo = new TrafficPromotion;
+                        $traffic_promo->traffic_id = $traffic_id;
+                        $traffic_promo->promotion_id = $promo_id;
+                        $traffic_promo->save();
+                    }
+                    // check got campaign id
+                    if (strpos($currentURL, '/campaign/') !== false) {
+                        $campaign_id = $pieces[7];
+                        $traffic_campaign = new TrafficCampaign;
+                        $traffic_campaign->traffic_id = $traffic_id;
+                        $traffic_campaign->campaign_id = $campaign_id;
+                        $traffic_campaign->org_id = $org_id;
+                        $traffic_campaign->sa_id = $sa_id;
+                        $traffic_campaign->save();
+                    }
+                } 
+            }
+        }
+        return;
+    }
+}

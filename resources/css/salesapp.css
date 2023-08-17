@@ -1,0 +1,44 @@
+body.webapp {
+    background:#ddd;
+}
+.webapp .frame {
+    position: relative;
+    overflow: hidden;
+}
+.webapp .frame {
+    max-height: 100vh;
+    width: auto;
+    display: inline-block;
+}
+.webapp .frame .phone-container {
+    max-height: 760px;
+    max-width:100%;
+    height: 100vh;
+    max-width: 50vw;
+    max-height: 90vh;
+}
+.webapp .frame .overlap-phone-container {
+    position: absolute;
+    left:0;
+    top:0;
+    z-index:2;
+    pointer-events: none;
+    height: 100%;
+    width: 100%;
+}
+.webapp #app {
+    box-sizing: content-box;
+    background: #fff;
+    position: absolute;
+    top: 6.3%;
+    left: 5.5%;
+    right:5%;
+    bottom:5%;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    z-index: 1;
+    overflow-y: scroll;
+    max-height: 100%;
+    margin-right: -15px;
+}

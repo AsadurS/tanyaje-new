@@ -1,0 +1,800 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Core\Cars;
+use App\Models\Core\Makes;
+use App\Models\Core\Models;
+use App\Models\Core\MerchantBranch;
+use App\Models\Core\MerchantInquiry;
+use App\Models\Core\Banks;
+use App\Models\Core\States;
+use App\Models\Core\Cities;
+use App\Models\Core\Countries;
+use App\Models\Core\User;
+use App\Models\Core\Promotion;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Mail;
+
+class SaleAdvisorController extends Controller
+{
+
+    private $versioning;
+
+    public function __construct( Cars $cars, Makes $makes, Models $models, Cities $cities, States $States, User $user, Countries $countries)
+    {
+		$this->States = $States;
+        $this->Cars = $cars;
+        $this->Makes = $makes;
+        $this->Models = $models;
+		$this->Cities = $cities;
+		$this->User = $user;
+        $this->Countries = $countries;
+    }
+
+    public function index(Request $request, $slug) {
+
+        // Just update this whenever salesapp.css or npm run dev
+        $this->versioning ='1.8.2';
+
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+        // $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+        //             ->LeftJoin('models','cars.model_id','=','models.model_id')
+        //             ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+        //             ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+        //             ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        // $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        return view('sales/landing')->with('data', $data);
+    }
+
+    public function show(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+                    ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+                    ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        return view('sales/show')->with('data', $data);
+    }
+
+    public function ask(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        // $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+        //             ->LeftJoin('models','cars.model_id','=','models.model_id')
+        //             ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+        //             ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+        //             ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        // $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        return view('sales/ask')->with('data', $data);
+    }
+
+    public function keep(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+        // $promos = DB::table('promotion')->where([
+        //     ['status','=', '1'],
+        //     ['organisation','=', $organisation->id]
+        // ])->get();
+
+        $promos = DB::table('promotion')
+                ->where('status','=', '1')
+                ->where(function($q) use ($organisation) {
+                    $q->where('organisation', $organisation->id)
+                    ->orWhere('organisation', '534');
+                })->get();
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        // $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+        //             ->LeftJoin('models','cars.model_id','=','models.model_id')
+        //             ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+        //             ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+        //             ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+
+
+        $data['promo'] = $promos;
+
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        // $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        return view('sales/keep')->with('data', $data);
+    }
+
+    public function verify(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+        $banks = Banks::all();
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        $organisation->full_address = $organisation->default_address_id;
+
+        if ($organisation->bank_id1 !== null && $organisation->bank_id1 !== 'Select') {
+            $organisation->bank_1image = $banks->filter(function($item) use ($organisation) {
+                return $item->bank_id == $organisation->bank_id1;
+            })->first()->logo;
+        } else {
+            $organisation->bank_1image = '';
+        }
+        if ($organisation->bank_id2 !== null && $organisation->bank_id2 !== 'Select') {
+            $organisation->bank_2image = $banks->filter(function($item) use ($organisation) {
+                return $item->bank_id == $organisation->bank_id1;
+            })->first()->logo;
+        } else {
+            $organisation->bank_2image = '';
+        }
+
+        // $organisation->bank_1 =  $banks->firstWhere('bank_id', 1)
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        // $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+        //             ->LeftJoin('models','cars.model_id','=','models.model_id')
+        //             ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+        //             ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+        //             ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        // $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['banks'] = $banks;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        return view('sales/verify')->with('data', $data);
+    }
+
+    public function make(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+
+            $make = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('users','cars.user_id','=','users.id')
+                    ->LeftJoin('item_type','cars.item_type_id','=','item_type.id')
+                    ->select('makes.make_id','makes.make_name')
+                    ->where('cars.user_id','=',$organisation->id)
+                    ->groupBy('makes.make_name')
+                    ->get();
+            $data['make'] = $make->toArray();
+            // dd($data['make']);
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+                    ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+                    ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        // return view('sales/show_make')->with('data', $data);
+        return view('sales/show')->with('data', $data);
+    }
+
+    public function model(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+
+            if($request->make_id){
+                $make_id = $request->make_id;
+            }
+            else{
+                $make_id = '';
+            };
+
+            $model = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('users','cars.user_id','=','users.id')
+                    ->LeftJoin('item_type','cars.item_type_id','=','item_type.id')
+                    ->LeftJoin('car_images','cars.car_id','=','car_images.cars_id')
+                    ->select('models.model_id','models.model_name','cars.sp_account','cars.vim','item_type.name as item_type_name','car_images.filename as car_image')
+                    ->where('cars.user_id','=',$organisation->id)
+                    ->where('cars.make_id','=',$make_id)
+                    ->groupBy('models.model_name')
+                    ->get();
+            $data['model'] = $model->toArray();
+            // dd($data['model']);
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+                    ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+                    ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        // return view('sales/show_model')->with('data', $data);
+        return view('sales/show')->with('data', $data);
+    }
+
+    public function item(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+
+            if($request->model_id){
+                $model_id = $request->model_id;
+            }
+            else{
+                $model_id = '';
+                // $model_id = '523','520','1044';
+            };
+
+            $item = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('users','cars.user_id','=','users.id')
+                    ->LeftJoin('item_type','cars.item_type_id','=','item_type.id')
+                    ->LeftJoin('car_images','cars.car_id','=','car_images.cars_id')
+                    ->select('makes.make_name','models.model_name','cars.*','item_type.name as item_type_name','car_images.filename as car_image')
+                    ->where('cars.user_id','=',$organisation->id)
+                    ->where('cars.model_id','=',$model_id)
+                    ->get();
+            $data['item'] = $item->toArray();
+            // dd($data['item']);
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+                    ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+                    ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        // return view('sales/show_model')->with('data', $data);
+        return view('sales/show')->with('data', $data);
+    }
+
+    public function item_detail(Request $request){
+        $data = [];
+
+        $organisation_name = $request->organisation_name;
+        $organisation_data = str_replace("-", " ", $organisation_name);
+
+        $state = $this->States->getter();
+        $data['state'] = $state;
+        $city = $this->Cities->getter();
+        $data['city'] = $city;
+        $country = $this->Countries->getter();
+        $data['country'] = $country;
+
+        $organisation = DB::table('users')->where('company_name','=', $organisation_data)->first();
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $organisation->id)->get();
+		if(count($user_to_address)>0){
+			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
+            $country = $country->where('countries_id','=',$address->entry_country_id)->first();
+            if($country){
+                $countries_name = $country->countries_name;
+            }else{
+                $countries_name = 'Malaysia';
+            }
+            $fulladdress = $address->entry_street_address . ", " . $address->entry_postcode . ", " . $address->entry_city . " " . $address->entry_state . " " . $countries_name;
+		}else{
+			$address = array();
+            $fulladdress = "";
+		}
+		$data['address'] = $fulladdress;
+
+        if($organisation){
+            $template = DB::table('templates')->where('id','=',$organisation->template_id)->get();
+
+            if($request->item_id){
+                $item_id = $request->item_id;
+            }
+            else{
+                $item_id = '';
+                // $model_id = '523','520','1044';
+            };
+
+            $item_detail = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('users','cars.user_id','=','users.id')
+                    ->LeftJoin('item_type','cars.item_type_id','=','item_type.id')
+                    ->LeftJoin('car_images','cars.car_id','=','car_images.cars_id')
+                    ->select('makes.make_name','models.model_name','cars.*','item_type.name as item_type_name','car_images.filename as car_image')
+                    ->where('cars.user_id','=',$organisation->id)
+                    ->where('cars.car_id','=',$item_id)
+                    ->get();
+            $data['item_detail'] = $item_detail->toArray();
+            // dd($data['item_detail']);
+        }
+        else{
+            $template = DB::table('templates')->first();
+        }
+
+        $sa_slug = $request->sa_slug;
+        $sale_advisor = MerchantBranch::where('merchant_branch.slug',$sa_slug)
+                        ->where('merchant_branch.user_id','=',$organisation->id)
+                        ->get();
+
+        $car = Cars::LeftJoin('makes','cars.make_id','=','makes.make_id')
+                    ->LeftJoin('models','cars.model_id','=','models.model_id')
+                    ->LeftJoin('merchant_branch','cars.merchant_id','=','merchant_branch.id')
+                    ->where('merchant_name', 'LIKE', '%' . $organisation_data . '%')
+                    ->get();
+
+        $document = DB::table('documents_manager')->where('documents_manager.user_id','=',$organisation->id)->get();
+
+        if($sale_advisor->count() == '0'){
+            return  redirect('not_allowed');
+        }
+
+        if($sale_advisor[0]->sa_profile_url){
+            $data['sa_base_url'] = $sale_advisor[0]->sa_profile_url;
+        }
+        else{
+            $data['sa_base_url'] = '/';
+        }
+        $data['organisation'] = $organisation;
+        $data['sale_advisor'] = $sale_advisor;
+        $data['showme'] = $car;
+        $data['askme'] = $document;
+        $data['template'] = $template;
+        $data['asset_version'] = $this->versioning;
+        // dd($data);
+
+        // return view('sales/show_model')->with('data', $data);
+        return view('sales/show')->with('data', $data);
+    }
+
+}

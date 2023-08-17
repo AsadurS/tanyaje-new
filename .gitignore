@@ -1,0 +1,47 @@
+### OSX BOOGERS ###
+.DS_Store
+*._DS_Store
+._.DS_Store
+*._
+._*
+._.*
+
+### WINDOWS BOOGERS ###
+Thumbs.db
+
+/node_modules
+/public/hot
+/public/storage
+/public/tmp
+/public/images/
+/public/images/media/
+/public/images/prototypes/
+/public/images/admin_logo/
+/public/uploads/users/
+/storage/*.key
+vendor/
+public/
+storage/
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+composer.lock
+error_log
+
+/nbproject/private/
+.vscode/
+
+/.idea
+
+!/public/storage/installed
+
+#dev ignore
+mysql/run/var
+apache_
+php_
+docker-compose.yml_apache
+
