@@ -106,7 +106,7 @@ class AgentController extends Controller
     public function dashboard(){
 
         $agent = Auth::guard('agent')->user();
-        return view("admin.agent.dashboard")->with('agent', $agent);
+        return view("admin.agent.sales-advisor-list")->with('agent', $agent);
     }
 
     public function salesAdvisorList(Request $request){
@@ -611,5 +611,76 @@ class AgentController extends Controller
         //DB::table('user_to_address')->where('address_book_id','=', $address_book_id)->delete();
         return redirect()->back()->withErrors([Lang::get("labels.DeleteSaleAdvisorSuccess")]);
     }
+    public function saleAdvisor(Request $request){
+        //if role is merchant then only can edit himself branch info
+//        if( Auth()->user()->role_id == \App\Models\Core\User::ROLE_MERCHANT && Auth()->user()->id != $request->id)
+//        {
+//            return  redirect('not_allowed');
+//        }
 
+        $title = array('pageTitle' => Lang::get("labels.AddBranch"));
+
+        $id = $request->id;
+
+        $merchantData = array();
+        $message = array();
+        $errorMessage = array();
+
+        if($id > 0){
+            $branch = DB::table('merchant_branch')
+                ->where('agent_id', Auth::guard('agent')->user()->id)
+                ->leftjoin('states', 'states.state_id','=','merchant_branch.state_id')
+                ->leftJoin('cities', 'cities.city_id', '=', 'merchant_branch.city_id')
+                ->where('merchant_branch.user_id', '=', $id);
+            if (!empty($request->get('ID'))) {
+                $branch = $branch->where('merchant_branch.id', 'LIKE', $request->ID );
+            }
+            if (!empty($request->get('name'))) {
+                $branch = $branch->where('merchant_branch.merchant_name', 'LIKE', '%' . $request->name . '%');
+            }
+            if (!empty($request->get('organisation_id'))) {
+                $branch = $branch->where('merchant_branch.user_id', 'LIKE', '%' . $request->organisation_id . '%');
+            }
+            $branch = $branch->paginate(50);
+        }
+        else{
+            $branch = DB::table('merchant_branch')
+                ->leftjoin('states', 'states.state_id','=','merchant_branch.state_id')
+                ->leftJoin('cities', 'cities.city_id', '=', 'merchant_branch.city_id');
+            if (!empty($request->get('ID'))) {
+                $branch = $branch->where('merchant_branch.id', 'LIKE', $request->ID );
+            }
+            if (!empty($request->get('name'))) {
+                $branch = $branch->where('merchant_branch.merchant_name', 'LIKE', '%' . $request->name . '%');
+            }
+            if (!empty($request->get('organisation_id'))) {
+                $branch = $branch->where('merchant_branch.user_id', 'LIKE', '%' . $request->organisation_id . '%');
+            }
+            $branch = $branch->paginate(50);
+        }
+
+        //return $addresses;
+        //$countries = $this->Customers->country();
+        $state = $this->States->getter();
+        $merchantData['state'] = $state;
+        $city = $this->Cities->getter();
+        $merchantData['city'] = $city;
+        $merchantData['message'] = $message;
+        $merchantData['errorMessage'] = $errorMessage;
+        $merchantData['merchant_branch'] = $branch;
+        //$merchantData['countries'] = $countries;
+        $merchantData['user_id'] = $id;
+
+        $admins = User::sortable(['id'=>'DESC'])
+            ->leftJoin('user_types','user_types.user_types_id','=','users.role_id')
+            ->select('users.*','user_types.*')
+            ->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
+            ->get();
+        $merchantData['admins'] = $admins;
+
+        $segments = Segments::all();
+        $merchantData['segments'] = $segments;
+
+        return view("admin.agent.sales-advisor-list",$title)->with('data', $merchantData);
+    }
 }

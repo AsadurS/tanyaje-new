@@ -13,11 +13,11 @@
             <li class="header">{{ trans('labels.navigation') }}</li>
 
 
-            <li class="treeview {{ Request::is('/agent/dashboard') ? 'active' : '' }}">
-                <a href="{{ URL::to('/agent/dashboard')}}">
-                    <i class="fa fa-dashboard"></i> <span>{{ trans('labels.header_dashboard') }}</span>
-                </a>
-            </li>
+{{--            <li class="treeview {{ Request::is('/agent/dashboard') ? 'active' : '' }}">--}}
+{{--                <a href="{{ URL::to('/agent/dashboard')}}">--}}
+{{--                    <i class="fa fa-dashboard"></i> <span>{{ trans('labels.header_dashboard') }}</span>--}}
+{{--                </a>--}}
+{{--            </li>--}}
             <li class="treeview {{ Request::is('/agent/sales-advisor') ? 'active' : '' }}">
                 <a href="{{ URL::to('/agent/sales-advisor')}}">
                     <i class="fa fa-dashboard"></i> <span> Sales Advisor</span>

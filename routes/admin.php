@@ -794,4 +794,5 @@ Route::group(['namespace' => 'AdminControllers','prefix' => 'agent'], function()
     Route::get('/sales-advisor-edit/{id}', 'AgentController@editSaleAdvisor');
     Route::post('/sales-advisor-update', 'AgentController@updateSaleAdvisor');
     Route::post('/sales-advisor-delete', 'AgentController@deleteBranch');
+    Route::get('/filtersaleAdvisor', 'AgentController@saleAdvisor');
 });

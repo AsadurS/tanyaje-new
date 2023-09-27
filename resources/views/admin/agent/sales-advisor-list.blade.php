@@ -42,7 +42,7 @@
                         <div class="box-header">
 
                             <!-- search filter -->
-                            {!! Form::open(array('url' =>'admin/filtersaleAdvisor', 'method'=>'get', 'class' => 'search-filter form-horizontal', 'enctype'=>'multipart/form-data')) !!}
+                            {!! Form::open(array('url' =>'agent/filtersaleAdvisor', 'method'=>'get', 'class' => 'search-filter form-horizontal', 'enctype'=>'multipart/form-data')) !!}
                             <input type="hidden" name="merchant_id" value="{{ $data['user_id'] }}">
                             <div class="form-group row">
                                 <div class="col-xs-1">
@@ -177,7 +177,7 @@
                                                         <!-- <a class="badge bg-light-blue CopyBranchModal" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" ><i class="fa fa-copy" aria-hidden="true"></i></a> -->
                                                         <!-- <a class="badge bg-light-blue editBranchModal" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a> -->
                                                         <a href="{{ URL::to('agent/sales-advisor-edit/'.$merchant_branch->id )}}" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" class="badge bg-light-blue"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
-                                                        <a branch_id = "{{ $merchant_branch->id }}" class="badge bg-red deleteBranchModal"><i class="fa fa-trash " aria-hidden="true"></i></a></td>
+{{--                                                        <a branch_id = "{{ $merchant_branch->id }}" class="badge bg-red deleteBranchModal"><i class="fa fa-trash " aria-hidden="true"></i></a></td>--}}
                                                 </tr>
                                             @endforeach
                                         @else
