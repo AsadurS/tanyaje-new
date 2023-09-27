@@ -56,7 +56,7 @@ class AgentController extends Controller
 
         if (Auth::guard('agent')->check()) {
 
-            return redirect('/agent/dashboard');
+            return redirect('/agent/sales-advisor');
         }else{
             $title = array('pageTitle' => Lang::get("labels.login_page_name"));
             return view("admin.agent.login",$title);
@@ -89,7 +89,7 @@ class AgentController extends Controller
                 $roleType= Agent::ROLE_ID;
                 if($agent->role_id === $roleType &&$agent->status==1){
 
-                return redirect()->intended('/agent/dashboard')->with('agent', $agent);
+                return redirect()->intended('/sales-advisor')->with('agent', $agent);
                 }
             }else{
                 return redirect('agent/login')->with('loginError',Lang::get("labels.EmailPasswordIncorrectText"));
@@ -99,8 +99,8 @@ class AgentController extends Controller
 
     //logout
     public function logout(){
-        $agent = Auth::guard('agent')->user();
-        return redirect()->intended('sale_advisor/login');
+          Auth::guard('agent')->logout();
+        return redirect()->intended('agent/login');
     }
 
     public function dashboard(){

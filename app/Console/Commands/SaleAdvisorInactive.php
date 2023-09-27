@@ -41,7 +41,6 @@ class SaleAdvisorInactive extends Command
     {
         SaleAdvisor::where('verified',1)->whereDate('verified_until','<', Carbon::now())
             ->chunk(100, function ($saleAdvisors) {
-
                 foreach ($saleAdvisors as $saleAdvisor) {
                     $saleAdvisor->update([
                          'verified'=>0

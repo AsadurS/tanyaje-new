@@ -554,7 +554,7 @@ class SaleAdvisorController extends Controller
 
 	public function login(){
 
-		if (Auth::check()) {
+		if (Auth::guard('saleadvisor')->check()) {
 		  return redirect('/admin/sale_advisors/dashboard');
 		}else{
 			$title = array('pageTitle' => Lang::get("labels.login_page_name"));

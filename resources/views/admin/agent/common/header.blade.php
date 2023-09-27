@@ -62,11 +62,11 @@
               <li >
                 <div class="pull-left" >
 
-                    <a href="{{ URL::to('admin/admin/profile')}}" class="btn btn-default btn-flat">{{ trans('labels.profile_link')}}</a>
+{{--                    <a href="{{ URL::to('admin/admin/profile')}}" class="btn btn-default btn-flat">{{ trans('labels.profile_link')}}</a>--}}
                 </div>
                 <div class="pull-right">
 
-                    <a href="{{ URL::to('admin/logout')}}" class="btn btn-default btn-flat">{{ trans('labels.sign_out') }}</a>
+                    <a href="{{ URL::to('agent/logout')}}" class="btn btn-default btn-flat">{{ trans('labels.sign_out') }}</a>
 
                 </div>
               </li>

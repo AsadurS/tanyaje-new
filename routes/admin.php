@@ -786,6 +786,7 @@ Route::group(['prefix'=>'admin/banners','middleware' => 'auth','namespace' => 'A
 Route::group(['namespace' => 'AdminControllers','prefix' => 'agent'], function()
 {
    Route::get('login', 'AgentController@login');
+   Route::get('logout', 'AgentController@logout');
     Route::post('checkLogin', 'AgentController@checkLogin');
    Route::get('dashboard', 'AgentController@dashboard');
    Route::get('sales-advisor', 'AgentController@salesAdvisorList');

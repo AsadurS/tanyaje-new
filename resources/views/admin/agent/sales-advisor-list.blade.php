@@ -197,9 +197,9 @@
                                 </div>
                             </div>
 
-                            <div class="box-footer text-center">
-                                <a href="{{ URL::to('admin/merchants')}}" class="btn btn-primary">{{ trans('labels.SaveComplete') }}</a>
-                            </div>
+{{--                            <div class="box-footer text-center">--}}
+{{--                                <a href="{{ URL::to('admin/merchants')}}" class="btn btn-primary">{{ trans('labels.SaveComplete') }}</a>--}}
+{{--                            </div>--}}
                             <!-- /.box-body -->
                         </div>
 
@@ -348,8 +348,6 @@
                                 </div>
                             </div>
                         </div>
-
-//$2a$04$dFZIk71DEYtzTTRRB/VlfeWk6zqWaXUdtB/tkG9wWDf334Bg8kNNO
                         <!-- /.box -->
                     </div>
                     <!-- /.col -->
