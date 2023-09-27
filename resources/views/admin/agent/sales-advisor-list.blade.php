@@ -1,11 +1,12 @@
-@extends('admin.layout')
+@extends('admin.agent.layout')
 @section('content')
+
     <div class="content-wrapper">
         <!-- Content Header (Page header) -->
         <section class="content-header">
             <h1> {{ trans('labels.SaleAdvisor') }} <small>{{ trans('labels.SaleAdvisor') }}...</small> </h1>
             <ol class="breadcrumb">
-                <li><a href="{{ URL::to('admin/dashboard/this_month')}}"><i class="fa fa-dashboard"></i> {{ trans('labels.breadcrumb_dashboard') }}</a></li>
+                <li><a href="{{ URL::to('agent/dashboard')}}"><i class="fa fa-dashboard"></i> {{ trans('labels.breadcrumb_dashboard') }}</a></li>
                 <li class="active">{{ trans('labels.SaleAdvisor') }}</li>
             </ol>
         </section>
@@ -25,25 +26,25 @@
 
                     @if(session()->has('message'))
                         <div class="alert alert-success" role="alert">
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             {{ session()->get('message') }}
                         </div>
                     @endif
 
                     @if(session()->has('errorMessage'))
                         <div class="alert alert-danger" role="alert">
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             {{ session()->get('errorMessage') }}
                         </div>
                     @endif
 
                     <div class="box">
                         <div class="box-header">
-                            
+
                             <!-- search filter -->
                             {!! Form::open(array('url' =>'admin/filtersaleAdvisor', 'method'=>'get', 'class' => 'search-filter form-horizontal', 'enctype'=>'multipart/form-data')) !!}
-                                <input type="hidden" name="merchant_id" value="{{ $data['user_id'] }}">
-                                <div class="form-group row">
+                            <input type="hidden" name="merchant_id" value="{{ $data['user_id'] }}">
+                            <div class="form-group row">
                                 <div class="col-xs-1">
                                     <input class="form-control" id="ID" name="ID" type="text" placeholder="ID">
                                 </div>
@@ -64,24 +65,21 @@
                                     <select id="segment_type" name="segment_type" class="form-control">
                                         <option value="">Segments</option>
                                         @if (count($data['segments']) > 0)
-                                            @foreach ($data['segments']  as $key=>$segment)
-                                                <option value="{{ $segment->segment_id }}">{{ $segment->segment_name }}</option>
+                                    @foreach ($data['segments']  as $key=>$segment)
+                                        <option value="{{ $segment->segment_id }}">{{ $segment->segment_name }}</option>
                                             @endforeach
-                                        @endif
-                                    </select>
-                                </div> -->
+                                @endif
+                                </select>
+                            </div> -->
                                 <div class="col-xs-2">
                                     <button type="submit" class="btn btn-primary">Search <span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
                                 </div>
-                                </div>
+                            </div>
                             {!! Form::close() !!}
                             <div class="box-tools pull-right">
                                 <!-- <button type="button" class="btn btn-block btn-primary" data-toggle="modal" data-target="#addBranchModal">{{ trans('labels.AddSaleAdvisor') }}</button> -->
-                                @if ($data['user_id'])
-                                    <a href="{{ URL::to('admin/addsaleadvisor/'.$data['user_id'])}}" type="button" class="btn btn-block btn-primary">{{ trans('labels.AddSaleAdvisor') }}</a>
-                                @else
-                                    <a href="{{ URL::to('admin/addsaleadvisor/0')}}" type="button" class="btn btn-block btn-primary">{{ trans('labels.AddSaleAdvisor') }}</a>
-                                @endif
+
+                                    <a href="{{ URL::to('agent/sales-advisor-add')}}" type="button" class="btn btn-block btn-primary">{{ trans('labels.AddSaleAdvisor') }}</a>
                             </div>
                         </div>
 
@@ -89,18 +87,18 @@
                         <div class="box-body">
                             <div class="row">
                                 <div class="col-xs-12">
-                                  <div class="row">
-                                      <div class="col-xs-12">
-                                          @if (count($errors) > 0)
-                                            @if($errors->any())
-                                            <div class="alert alert-success alert-dismissible" role="alert">
-                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                                {{$errors->first()}}
-                                            </div>
+                                    <div class="row">
+                                        <div class="col-xs-12">
+                                            @if (count($errors) > 0)
+                                                @if($errors->any())
+                                                    <div class="alert alert-success alert-dismissible" role="alert">
+                                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                        {{$errors->first()}}
+                                                    </div>
+                                                @endif
                                             @endif
-                                          @endif
-                                      </div>
-                                  </div>
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
@@ -147,11 +145,11 @@
                                                     </td>
                                                     <td style="text-transform: none !important;">
                                                         @if($merchant_branch->sa_profile_url)
-                                                        <a href="{{url($merchant_branch->sa_profile_url)}}" target="_blank"><i class="fa fa-external-link" style="font-size: 16px;" aria-hidden="true"></i></a>
-                                                        <!-- {{ URL::to($merchant_branch->sa_profile_url) }} -->
+                                                            <a href="{{url($merchant_branch->sa_profile_url)}}" target="_blank"><i class="fa fa-external-link" style="font-size: 16px;" aria-hidden="true"></i></a>
+                                                            <!-- {{ URL::to($merchant_branch->sa_profile_url) }} -->
                                                         @else
                                                             NA
-                                                        @endif
+                                                    @endif
                                                     <td>
                                                         @if($merchant_branch->verified == '1')
                                                             <i data-toggle="tooltip" data-placement="top" title="Active" class="fa fa-check-circle" style="font-size:24px;color: #03b900;"></i>
@@ -178,7 +176,7 @@
                                                         <!-- <a class="badge bg-green" href="{!! route('copy_merchant_cars',['branch_id' => $merchant_branch->id,'user_id' => $data['user_id']]) !!}" ><i class="fa fa-copy" aria-hidden="true"></i></a> -->
                                                         <!-- <a class="badge bg-light-blue CopyBranchModal" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" ><i class="fa fa-copy" aria-hidden="true"></i></a> -->
                                                         <!-- <a class="badge bg-light-blue editBranchModal" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a> -->
-                                                        <a href="{{ URL::to('admin/editsaleadvisor/'.$merchant_branch->id )}}" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" class="badge bg-light-blue"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
+                                                        <a href="{{ URL::to('agent/sales-advisor-edit/'.$merchant_branch->id )}}" user_id = '{{ $data['user_id'] }}' branch_id = "{{ $merchant_branch->id }}" class="badge bg-light-blue"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a>
                                                         <a branch_id = "{{ $merchant_branch->id }}" class="badge bg-red deleteBranchModal"><i class="fa fa-trash " aria-hidden="true"></i></a></td>
                                                 </tr>
                                             @endforeach
@@ -191,10 +189,10 @@
                                         </tbody>
                                     </table>
                                     @if (count($data['merchant_branch']) > 0)
-                                    <div class="col-xs-12 text-right">
-                                        {{-- {{$data['merchant_branch']->links()}} --}}
-                                        {!! $data['merchant_branch']->appends(request()->except('page'))->render() !!}
-                                    </div>
+                                        <div class="col-xs-12 text-right">
+                                            {{-- {{$data['merchant_branch']->links()}} --}}
+                                            {!! $data['merchant_branch']->appends(request()->except('page'))->render() !!}
+                                        </div>
                                     @endif
                                 </div>
                             </div>
@@ -336,7 +334,7 @@
                                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                                         <h4 class="modal-title" id="deleteBranchModalLabel">{{ trans('labels.DeleteSaleAdvisor') }}</h4>
                                     </div>
-                                    {!! Form::open(array('url' =>'admin/merchants/deleteBranch', 'name'=>'deleteBranch', 'id'=>'deleteBranch', 'method'=>'post', 'class' => 'form-horizontal', 'enctype'=>'multipart/form-data')) !!}
+                                    {!! Form::open(array('url' =>'agent/sales-advisor-delete', 'name'=>'deleteBranch', 'id'=>'deleteBranch', 'method'=>'post', 'class' => 'form-horizontal', 'enctype'=>'multipart/form-data')) !!}
                                     {!! Form::hidden('user_id',  '', array('class'=>'form-control', 'id'=>'user_id')) !!}
                                     {!! Form::hidden('branch_id',  '', array('class'=>'form-control', 'id'=>'branch_id')) !!}
                                     <div class="modal-body">
@@ -351,7 +349,7 @@
                             </div>
                         </div>
 
-
+//$2a$04$dFZIk71DEYtzTTRRB/VlfeWk6zqWaXUdtB/tkG9wWDf334Bg8kNNO
                         <!-- /.box -->
                     </div>
                     <!-- /.col -->
@@ -361,22 +359,22 @@
                 <!-- Main row -->
 
 
+                <!-- /.row -->
+
+                <!-- Main row -->
+
+            </div>
+
+
             <!-- /.row -->
-
-            <!-- Main row -->
-
+        </section>
+        <!-- /.content -->
     </div>
-
-
-    <!-- /.row -->
-    </section>
-    <!-- /.content -->
-    </div>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('.select2').select2();
-    });
-</script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2();
+        });
+    </script>
 @endsection

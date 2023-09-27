@@ -762,6 +762,7 @@ Route::group(['prefix'=>'admin/banners','middleware' => 'auth','namespace' => 'A
     Route::post('admin/sale_advisors/updatecampaigns', 'SaleAdvisorController@updatecampaigns');
     Route::post('admin/sale_advisors/deletecampaigns', 'SaleAdvisorController@deletecampaigns');
     Route::get('admin/sale_advisors/filtercampaign', 'SaleAdvisorController@campaigns');
+    Route::post('admin/sale_advisors/{renew}/request/{id}', 'SaleAdvisorController@changeVerification');
 
     // Campaign report
     Route::get('admin/sale_advisors/campaignreport', 'SaleAdvisorController@campaignreport');
@@ -780,4 +781,17 @@ Route::group(['prefix'=>'admin/banners','middleware' => 'auth','namespace' => 'A
     Route::get('admin/sale_advisors/filteritemreport', 'SaleAdvisorController@itemreport');
   });
 
+});
+
+Route::group(['namespace' => 'AdminControllers','prefix' => 'agent'], function()
+{
+   Route::get('login', 'AgentController@login');
+    Route::post('checkLogin', 'AgentController@checkLogin');
+   Route::get('dashboard', 'AgentController@dashboard');
+   Route::get('sales-advisor', 'AgentController@salesAdvisorList');
+   Route::get('sales-advisor-add', 'AgentController@addSalesAdvisor');
+   Route::post('sales-advisor-insert', 'AgentController@insertSaleAdvisor');
+    Route::get('/sales-advisor-edit/{id}', 'AgentController@editSaleAdvisor');
+    Route::post('/sales-advisor-update', 'AgentController@updateSaleAdvisor');
+    Route::post('/sales-advisor-delete', 'AgentController@deleteBranch');
 });

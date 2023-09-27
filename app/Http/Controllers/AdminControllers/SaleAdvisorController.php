@@ -1,5 +1,7 @@
 <?php
 namespace App\Http\Controllers\AdminControllers;
+use App\Agent;
+use App\Mail\ToAgentSend;
 use App\Models\Core\Languages;
 use App\Models\Core\Setting;
 use App\Models\Admin\Admin;
@@ -15,10 +17,14 @@ use App\Models\Core\Template;
 use App\Models\Core\Banks;
 use App\Models\Core\Segments;
 use App\Models\Core\Documents;
+use App\SaleAdvisor;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -26,10 +32,8 @@ use Exception;
 use App\Models\Core\Images;
 use Validator;
 use Hash;
-use Auth;
 use ZipArchive;
 use File;
-use Mail;
 use Image;
 use Carbon\Carbon;
 
@@ -145,14 +149,16 @@ class SaleAdvisorController extends Controller
 			->select('users.*','user_types.*')
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->get();
+        $agents = Agent::where('status',1)->get();
 		$result['admins'] = $admins;
+		$result['agents'] = $agents;
 		$result['user_id'] = $id;
 
 		return view("admin.sale_advisors.add",$title)->with('result', $result)->with('allimage',$allimage);
 	}
 
     public function insertSaleAdvisor(Request $request){
-        
+
 		$user_to_address = DB::table('user_to_address')->where('user_id','=', $request->organisation_id)->get();
 		if(count($user_to_address)>0){
 			$address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->first();
@@ -200,7 +206,6 @@ class SaleAdvisorController extends Controller
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->where('users.id','=',$request->organisation_id)
 			->get();
-
 		$sa_profile_url = "/sale-advisor/".Str::slug($admins[0]->company_name,"-")."/".Str::slug($request->merchant_name,"-");
 		// dd($sa_profile_url);
 
@@ -239,7 +244,10 @@ class SaleAdvisorController extends Controller
 			'role_id' => $request->adminType,
 			'password'	=>   Hash::make($request->password),
 			'status' =>  '1',
-			'created_at' => date('Y-m-d H:i:s')
+			'created_at' => date('Y-m-d H:i:s'),
+			'agent_id' => $request->agent_id,
+			'package' => $request->package,
+			'payslip' =>SaleAdvisor::paySlipUpload($request),
 		]);
 
         $message = Lang::get("labels.SaleAdvisorAddedMessage");
@@ -284,7 +292,8 @@ class SaleAdvisorController extends Controller
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->get();
 		$result['admins'] = $admins;
-
+        $agents = Agent::where('status',1)->get();
+        $result['agents'] = $agents;
 		// charts data
 		$chart = DB::table('traffics_sa')
 				->leftJoin('traffics','traffics.id','=','traffics_sa.traffic_id')
@@ -293,7 +302,7 @@ class SaleAdvisorController extends Controller
 					'traffics.*','merchant_branch.merchant_name as merchant_name', 'merchant_branch.id as merchant_id',
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'visit' THEN 1 END ) ) AS pageview"),
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type != 'visit' THEN 1 END ) ) AS action"),
-					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"), 
+					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"),
 					DB::raw("YEAR(traffics.created_at) year, MONTH(traffics.created_at) month, DAY(traffics.created_at) day")
 				)
 				->where('traffics_sa.sa_id','=',$sale_advisor_id);
@@ -355,7 +364,7 @@ class SaleAdvisorController extends Controller
 					]);
 				}
 				$chart = $chart->groupby('year','month','day')->get();
-		
+
 		$chartsLabel = [];
 		$chartsPageview = [];
 		$chartsCall = [];
@@ -394,7 +403,7 @@ class SaleAdvisorController extends Controller
 						DB::raw("COUNT( ( CASE WHEN traffics.event_type != 'visit' THEN 1 END ) ) AS action")
 					)
 					->where('traffics_sa.sa_id','=',$sale_advisor_id);
-					
+
 		if (!empty($request->get('ID'))) {
 			$admins_sa = $admins_sa->where('merchant_branch.id', 'LIKE', $request->ID );
 		}
@@ -515,6 +524,9 @@ class SaleAdvisorController extends Controller
 			'is_default' => $request->verified,
 			'role_id' => $request->adminType,
 			'updated_at'=> date('Y-m-d H:i:s'),
+            'agent_id' => $request->agent_id,
+            'package' => $request->package,
+            'payslip' =>SaleAdvisor::paySlipUpload($request,$saleAdvisor_id),
         ]);
 
 		if($request->changePassword == 'yes'){
@@ -569,10 +581,10 @@ class SaleAdvisorController extends Controller
 		}else{
 			//check authentication of email and password
 			$adminInfo = array("merchant_email" => $request->email, "password" => $request->password);
-			
+
 			if(Auth::guard('saleadvisor')->attempt($adminInfo)) {
 				$admin = Auth::guard('saleadvisor')->user();
-				
+
 				$roleType= \App\Models\Core\SaleAdvisors::ROLE_SALESADVISOR;
 				if ($admin->role_id == $roleType && !$admin->status)
 				{
@@ -581,7 +593,7 @@ class SaleAdvisorController extends Controller
 				}
 				else
                 {
-					
+
                     if( $admin->role_id == \App\Models\Core\User::ROLE_CUSTOMER )
                     {
                         Auth::logout();
@@ -589,7 +601,7 @@ class SaleAdvisorController extends Controller
                     }
 
 					$administrators = DB::table('merchant_branch')->where('id', $admin->id)->get();
-					
+
 					$categories_id = '';
 					//admin category role
 					if(Auth::guard('saleadvisor')->user()->adminType != '1'){
@@ -643,7 +655,7 @@ class SaleAdvisorController extends Controller
 			->select('users.*','user_types.*')
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->get();
-		
+
 		$result['message'] = $message;
 		$result['errorMessage'] = $errorMessage;
 
@@ -685,7 +697,7 @@ class SaleAdvisorController extends Controller
 		$result['organisation'] = $organisation;
 		$result['admins'] = $campaign;
 		$result['segments'] = $segments;
-    
+
         return view("admin.sale_advisors.campaign.index",$title)->with('result', $result);
 	}
 
@@ -698,7 +710,7 @@ class SaleAdvisorController extends Controller
 
 		$adminTypes = DB::table('user_types')->where('isActive', 1)->where('user_types_id','>','10')->get();
 		$result['adminTypes'] = $adminTypes;
-         
+
 		$segments = Segments::all();
 		$result['segments'] = $segments;
 
@@ -708,7 +720,7 @@ class SaleAdvisorController extends Controller
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->get();
 		$result['organisations'] = $organisations;
-		
+
 		return view("admin.sale_advisors.campaign.add",$title)->with('result', $result);
 	}
 
@@ -748,14 +760,14 @@ class SaleAdvisorController extends Controller
 	public function editcampaigns(Request $request){
 		$title = array('pageTitle' => Lang::get("labels.add_campaign"));
 		$myid = $request->id;
-			
+
 		$result = array();
 		$message = array();
 		$errorMessage = array();
-		
+
 		$adminTypes = DB::table('user_types')->where('isActive', 1)->where('user_types_id','>','10')->get();
 		$result['adminTypes'] = $adminTypes;
-		
+
 		$result['myid'] = $myid;
 
 		$admins = DB::table('campaigns')->where('campaign_id','=', $myid)->get();
@@ -779,7 +791,7 @@ class SaleAdvisorController extends Controller
 		$currentUser = Auth()->user()->id;
 		$campaign_id    =   $request->myid;
 		$time = Carbon::now();
-		
+
 		DB::table('campaigns')->where('campaign_id','=', $campaign_id)->update([
 			'campaign_name' => $request->campaign_name,
 			'campaign_image' => $request->campaign_image,
@@ -790,14 +802,14 @@ class SaleAdvisorController extends Controller
 			'status' => $request->status_id,
 			'updated_at' => date('Y-m-d H:i:s')
 		]);
-		
+
         $message = Lang::get("labels.CampaignEditMessage");
 		return redirect()->back()->with('message', $message);
 	}
 
 	public function deletecampaigns(Request $request){
         $campaign_id  =  $request->users_id;
-		
+
         DB::table('campaigns')->where('campaign_id','=', $campaign_id)->delete();
         return redirect()->back()->withErrors([Lang::get("labels.DeleteCampaignMessage")]);
     }
@@ -805,6 +817,7 @@ class SaleAdvisorController extends Controller
 
 	// sa campaign report
 	public function campaignreport(Request $request){
+
 		$title = array('pageTitle' => Lang::get("labels.titleCampaignReport"));
 		$language_id = '1';
 		$images = new Images;
@@ -939,7 +952,7 @@ class SaleAdvisorController extends Controller
 					}
 				}
 			}
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				// $top_campaigns = $top_campaigns->whereIn('traffics_campaign.org_id' ,$childOrg);
 				$top_campaigns = $top_campaigns->where('traffics_campaign.sa_id' ,$sa_id);
@@ -1013,13 +1026,13 @@ class SaleAdvisorController extends Controller
 						->where('traffics.event_type','=','campaign_click')
 						->where('campaigns.campaign_name','!=',null)
 						->count();
-		
+
 		// total interested
 		$result['total_interest'] = (Clone $top_campaigns)
 						->where('traffics.event_type','=','campaign_interest')
 						->where('campaigns.campaign_name','!=',null)
 						->count();
-				
+
 		// total response
 		$result['total_response'] = (Clone $top_campaigns)
 						->where('traffics.event_type','=','campaign_response')
@@ -1067,8 +1080,10 @@ class SaleAdvisorController extends Controller
 
 		$result['message'] = $message;
 		$result['errorMessage'] = $errorMessage;
+        $user = SaleAdvisor::where('id',Auth::guard('saleadvisor')->user()->id)->with('user')->first();
 
-		return view("admin.sale_advisors.report.campaign",$title)->with('result', $result)->with('allimage',$allimage);
+		return view("admin.sale_advisors.report.campaign",$title)->with('result', $result)->with('allimage',$allimage)
+            ->with('user',$user);
 	}
 
 	public function campaignfullreport(Request $request){
@@ -1125,7 +1140,7 @@ class SaleAdvisorController extends Controller
 					}
 				}
 			}
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				// $top_campaigns = $top_campaigns->whereIn('traffics_campaign.org_id' ,$childOrg);
 				$top_campaigns = $top_campaigns->where('traffics_campaign.sa_id' ,$sa_id);
@@ -1197,7 +1212,7 @@ class SaleAdvisorController extends Controller
 						->groupby('traffics_campaign.campaign_id')
 						->orderBy('share','DESC')->paginate(15);
 						// dd($result['top_campaigns']);
-		
+
 		// chart data for campaign full report ----------------------------------
 		$chart = DB::table('traffics_campaign')
 				->leftJoin('traffics','traffics.id','=','traffics_campaign.traffic_id')
@@ -1208,7 +1223,7 @@ class SaleAdvisorController extends Controller
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'campaign_click' THEN 1 END ) ) AS click"),
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'campaign_interest' THEN 1 END ) ) AS interest"),
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'campaign_response' THEN 1 END ) ) AS response"),
-					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"), 
+					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"),
 					DB::raw("YEAR(traffics.created_at) year, MONTH(traffics.created_at) month, DAY(traffics.created_at) day")
 				);
 		// filter for all
@@ -1234,7 +1249,7 @@ class SaleAdvisorController extends Controller
 					}
 				}
 			}
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				// $top_campaigns = $top_campaigns->whereIn('traffics_campaign.org_id' ,$childOrg);
 				$chart = $chart->where('traffics_campaign.sa_id' ,$sa_id);
@@ -1375,7 +1390,7 @@ class SaleAdvisorController extends Controller
 					}
 				}
 			}
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				// $top_campaigns = $top_campaigns->whereIn('traffics_campaign.org_id' ,$childOrg);
 				$campaign_response = $campaign_response->where('campaigns_response.sa_id' ,$sa_id);
@@ -1482,7 +1497,7 @@ class SaleAdvisorController extends Controller
 			$sa_id = Auth::guard('saleadvisor')->user()->id;
 			$org_id = Auth::guard('saleadvisor')->user()->user_id;
 			array_push($childOrg, $sa_id);
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				$org_list = $childOrg;
 				$admins = $admins->whereIn('merchant_branch.id' ,$childOrg);
@@ -1570,7 +1585,7 @@ class SaleAdvisorController extends Controller
 					'traffics.*','merchant_branch.merchant_name as merchant_name', 'merchant_branch.id as merchant_id',
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'visit' THEN 1 END ) ) AS pageview"),
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type != 'visit' THEN 1 END ) ) AS action"),
-					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"), 
+					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"),
 					DB::raw("YEAR(traffics.created_at) year, MONTH(traffics.created_at) month, DAY(traffics.created_at) day")
 				);
 				if(Auth::guard('saleadvisor')){
@@ -1578,7 +1593,7 @@ class SaleAdvisorController extends Controller
 					$sa_id = Auth::guard('saleadvisor')->user()->id;
 					$org_id = Auth::guard('saleadvisor')->user()->user_id;
 					array_push($childOrg, $sa_id);
-					// get id based on selected 
+					// get id based on selected
 					if(count($childOrg) > 0){
 						$org_list = $childOrg;
 						$chart = $chart->whereIn('merchant_branch.id' ,$childOrg);
@@ -1651,7 +1666,7 @@ class SaleAdvisorController extends Controller
 					]);
 				}
 				$chart = $chart->groupby('year','month','day')->get();
-		
+
 		$chartsLabel = [];
 		$chartsPageview = [];
 		$chartsCall = [];
@@ -1705,13 +1720,13 @@ class SaleAdvisorController extends Controller
 						DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'whatsapp' THEN 1 END ) ) AS whatsapp"),
 						DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'waze' THEN 1 END ) ) AS waze")
 					);
-		
+
 		if(Auth::guard('saleadvisor')){
 			$childOrg = array();
 			$sa_id = Auth::guard('saleadvisor')->user()->id;
 			$org_id = Auth::guard('saleadvisor')->user()->user_id;
 			array_push($childOrg, $org_id);
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				$org_list = $childOrg;
 				$admins = $admins->whereIn('cars.user_id' ,$childOrg);
@@ -1774,19 +1789,19 @@ class SaleAdvisorController extends Controller
 		}
 
 		$admins = $admins->groupby('traffics_item.item_id')->orderBy('pageview','DESC')->paginate(20);
-		
+
 		// total pageview
 		$total_pageview = DB::table('traffics_item')
 							->leftJoin('traffics','traffics.id','=','traffics_item.traffic_id')
 							->where('traffics.event_type', '=' , 'visit')
 							->count();
-		
+
 		$organisation = User::sortable(['id'=>'DESC'])
 			->leftJoin('user_types','user_types.user_types_id','=','users.role_id')
 			->select('users.*','user_types.*')
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->get();
-		
+
 		// charts data
 		$chart = DB::table('traffics_item')
 				->leftJoin('traffics','traffics.id','=','traffics_item.traffic_id')
@@ -1795,24 +1810,24 @@ class SaleAdvisorController extends Controller
 					'traffics.*','cars.car_id as item_id', 'cars.title as item_title',
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'visit' THEN 1 END ) ) AS pageview"),
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type != 'visit' THEN 1 END ) ) AS action"),
-					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"), 
+					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"),
 					DB::raw("YEAR(traffics.created_at) year, MONTH(traffics.created_at) month, DAY(traffics.created_at) day")
 				);
-				
+
 				if(Auth()->user()->role_id == \App\Models\Core\User::ROLE_MERCHANT){
 					$childOrgChart = array();
 					// main parent
 					$hqOrgChart = DB::table('users')->where('users.id','=', Auth()->user()->id)->get();
-					
+
 					if(count($hqOrgChart) > 0){
 						array_push($childOrgChart, $hqOrgChart[0]->id);
-						
+
 						$checklvl2OrgChart = DB::table('users')->where('users.parent_id','=', $hqOrgChart[0]->id)->get();
 						// dd($checklvl2OrgChart);
 						if(count($checklvl2OrgChart) > 0){
 							foreach($checklvl2OrgChart as $checklvl2OrgCharts){
 								array_push($childOrgChart, $checklvl2OrgCharts->id);
-								
+
 								$checklvl3OrgChart = DB::table('users')->where('users.parent_id','=', $checklvl2OrgCharts->id)->get();
 								if(count($checklvl3OrgChart) > 0){
 									foreach($checklvl3OrgChart as $checklvl3OrgCharts){
@@ -1822,8 +1837,8 @@ class SaleAdvisorController extends Controller
 							}
 						}
 					}
-					
-					// get id based on selected 
+
+					// get id based on selected
 					if(count($childOrgChart) > 0){
 						$chart = $chart->whereIn('cars.user_id' ,$childOrgChart);
 					}
@@ -1833,7 +1848,7 @@ class SaleAdvisorController extends Controller
 					$sa_id = Auth::guard('saleadvisor')->user()->id;
 					$org_id = Auth::guard('saleadvisor')->user()->user_id;
 					array_push($childOrgChart, $org_id);
-					// get id based on selected 
+					// get id based on selected
 					if(count($childOrgChart) > 0){
 						$chart = $chart->whereIn('cars.user_id' ,$childOrgChart);
 					}
@@ -1902,7 +1917,7 @@ class SaleAdvisorController extends Controller
 					]);
 				}
 				$chart = $chart->groupby('year','month','day')->get();
-		
+
 		$chartsLabel = [];
 		$chartsPageview = [];
 		$chartsCall = [];
@@ -1931,7 +1946,7 @@ class SaleAdvisorController extends Controller
 		$result['admins'] = $admins;
 		$result['organisation'] = $organisation;
 		$result['org_list'] = $org_list;
-      
+
 		return view("admin.sale_advisors.report.item",$title)->with('result', $result)->with('allimage',$allimage);
 	}
 
@@ -1953,13 +1968,13 @@ class SaleAdvisorController extends Controller
 						'traffics.*','promotion.promotion_id as promotion_ids', 'promotion.promotion_name as promotion_name',
 						DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'promotion_click' THEN 1 END ) ) AS pageview")
 					);
-			
+
 		if(Auth::guard('saleadvisor')){
 			$childOrg = array();
 			$sa_id = Auth::guard('saleadvisor')->user()->id;
 			$org_id = Auth::guard('saleadvisor')->user()->user_id;
 			array_push($childOrg, $org_id);
-			// get id based on selected 
+			// get id based on selected
 			if(count($childOrg) > 0){
 				$org_list = $childOrg;
 				$admins = $admins->whereIn('promotion.organisation' ,$childOrg);
@@ -2039,7 +2054,7 @@ class SaleAdvisorController extends Controller
 			->select('users.*','user_types.*')
 			->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
 			->get();
-		
+
 		$segments = Segments::all();
 
 		// charts data
@@ -2049,16 +2064,16 @@ class SaleAdvisorController extends Controller
 				->select(
 					'traffics.*','promotion.promotion_id as promotion_ids', 'promotion.promotion_name as promotion_name',
 					DB::raw("COUNT( ( CASE WHEN traffics.event_type = 'promotion_click' THEN 1 END ) ) AS pageview"),
-					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"), 
+					DB::raw("DATE_FORMAT(traffics.created_at, '%M') months"),
 					DB::raw("YEAR(traffics.created_at) year, MONTH(traffics.created_at) month, DAY(traffics.created_at) day")
 				);
-				
+
 				if(Auth::guard('saleadvisor')){
 					$childOrgChart = array();
 					$sa_id = Auth::guard('saleadvisor')->user()->id;
 					$org_id = Auth::guard('saleadvisor')->user()->user_id;
 					array_push($childOrgChart, $org_id);
-					// get id based on selected 
+					// get id based on selected
 					if(count($childOrgChart) > 0){
 						$admins = $admins->whereIn('promotion.organisation' ,$childOrgChart);
 					}
@@ -2133,7 +2148,7 @@ class SaleAdvisorController extends Controller
 					]);
 				}
 				$chart = $chart->groupby('year','month','day')->get();
-		
+
 		$chartsLabel = [];
 		$chartsPageview = [];
 		// $chartsCall = [];
@@ -2161,8 +2176,36 @@ class SaleAdvisorController extends Controller
 		$result['total_pageview'] = $total_pageview;
 		$result['segments'] = $segments;
 		$result['org_list'] = $org_list;
-    
+
 		return view("admin.sale_advisors.report.promotion",$title)->with('result', $result)->with('allimage',$allimage);
 	}
 	// sa campaign report end
+
+    public function changeVerification(Request $request, $type, $id)
+    {
+
+        try{
+           $success = false;
+           if($type==='renew'){
+               SaleAdvisor::where('id',$id)->where('verified',0)->update([
+                   'verified'=> 3,
+                   'payslip' =>SaleAdvisor::paySlipUpload($request,$id),
+               ]);
+               $success = true;
+           }
+            $saleAdvisor = SaleAdvisor::where('id',$id)->with('user')->first();
+           if($saleAdvisor->user){
+               try {
+                   Mail::to($saleadvisor->merchant_email)->send(new ToAgentSend($data, true));
+               }catch(\Exception $exception){
+                   Log::error($exception);
+               }
+
+           }
+
+       }catch(Exception $e){
+           Log::error($e);
+       }
+       return \redirect()->back();
+    }
 }

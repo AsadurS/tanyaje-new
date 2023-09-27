@@ -46,17 +46,21 @@ return [
             'provider' => 'users',
         ],
         'admin' => [
-                'driver' => 'session',
-                'provider' => 'admins',
-            ],
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
         'customer' => [
-                'driver' => 'session',
-                'provider' => 'customers',
-            ],
+            'driver' => 'session',
+            'provider' => 'customers',
+        ],
         'saleadvisor' => [
-                'driver' => 'session',
-                'provider' => 'saleadvisors',
-            ],
+            'driver' => 'session',
+            'provider' => 'saleadvisors',
+        ],
+        'agent' => [
+            'driver' => 'session',
+            'provider' => 'agent',
+        ],
     ],
 
     /*
@@ -82,16 +86,21 @@ return [
             'model' => App\User::class,
         ],
         'admins' => [
-                'driver' => 'eloquent',
-                'model' => App\Admin::class,
-            ],
+            'driver' => 'eloquent',
+            'model' => App\Admin::class,
+        ],
         'customers' => [
-                'driver' => 'eloquent',
-                'model' => App\Customer::class,
-            ],
+            'driver' => 'eloquent',
+            'model' => App\Customer::class,
+        ],
         'saleadvisors' => [
             'driver' => 'eloquent',
             'model' => App\SaleAdvisor::class,
+        ],
+
+        'agent' => [
+            'driver' => 'eloquent',
+            'model' => App\Agent::class,
         ]
 
         // 'users' => [

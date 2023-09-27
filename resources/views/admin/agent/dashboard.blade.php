@@ -1,4 +1,4 @@
-@extends('admin.layout')
+@extends('admin.agent.layout')
 @section('content')
     <div class="content-wrapper">
         <!-- Content Header (Page header) -->
@@ -13,7 +13,7 @@
 
         <!-- Main content -->
         <section class="content">
-
+              Welcome to agent Dashboard
             <!-- /.row -->
         </section>
         <!-- /.content -->

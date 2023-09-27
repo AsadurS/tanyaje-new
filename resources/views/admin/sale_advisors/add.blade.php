@@ -143,9 +143,10 @@
                                 <label for="verification" class="col-sm-2 col-md-2 control-label" style="">{{ trans('labels.Verification') }}</label>
                                 <div class="col-sm-10 col-md-3">
                                     <select class="form-control field-validate" name="verified" id="verified">
-                                        <option value="2">N/A</option>
+                                        <option value="2">Active</option>
                                         <option value="1">Verified</option>
-                                        <option value="0">Unverified</option>
+                                        <option value="0">Inactive</option>
+                                        <option value="3">Pending</option>
                                     </select>
                                     <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">
                                     {{ trans('labels.VerificationText') }}</span>
@@ -194,7 +195,42 @@
                                     <input class="form-control" name="waze_url" id="waze_url" style="height: 60px;overflow: auto;" value="Link generated based on organisation address" readonly>
                                 </div>
                             </div>
-                            
+                             <div class="form-group">
+                                 <label for="waze_url" class="col-sm-2 col-md-2 control-label" style="">{{ 'Agent'  }}</label>
+                                 <div class="col-sm-10 col-md-3">
+                                     <select name="agent_id" id="agent" class="form-control field-validate select2" >
+                                         <option >Select Sales Agent</option>
+                                         @foreach($result['agents'] as $agent)
+                                            <option  value="{{$agent->id}}">{{$agent->first_name}} {{$agent->last_name}}</option>
+                                         @endforeach
+
+                                     </select>
+                                 </div>
+                                 <label for="waze_url" class="col-sm-2 col-md-2 control-label" style="">{{ 'Package'  }}</label>
+                                 <div class="col-sm-10 col-md-3">
+                                     <select name="package" id="package" class="form-control field-validate select2">
+                                          <option >Select Package</option>
+                                         <option value="Basic">Basic</option>
+                                         <option value="Full">Full</option>
+                                         <option value="Premium">Premium</option>
+                                         <option value="Plain Format">Plain Format</option>
+                                     </select>
+                                 </div>
+                             </div>
+                             <div class="form-group">
+                                 <label for="payslip" class="col-sm-2 col-md-2 control-label" style="">Payslip</label>
+                                 <div class="col-sm-10 col-md-3">
+                                     <!-- <input type="file" name="profile_img" id="profile_img" class="form-control"> -->
+                                     <span style="display:flex;">
+                                      <input type="file"  name="payslip" style="display: none" accept="image/jpeg,image/png,application/pdf"  id="payslip" class="form-control">
+                                      <input type="text"  class="form-control" id="payslip-name"  readonly="readonly" aria-label="payslip" aria-describedby="button-payslip" value="">
+                                      <button class="btn btn-outline-secondary" type="button" id="button-payslip">Select</button>
+                                    </span>
+                                     <span class="help-block" style="font-weight: normal;font-size: 11px;margin-bottom: 0;">Upload payslip here</span>
+
+                                 </div>
+                             </div>
+
                             
                             <br>
                             <h4>{{ trans('labels.LandingPage') }}</h4>
@@ -409,5 +445,20 @@
   function fmSetLink($url) {
     document.getElementById(inputId).value = $url;
   }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // profile image
+        document.getElementById('button-payslip').addEventListener('click', (event) => {
+            event.preventDefault();
+           document.getElementById('payslip').click()
+        });
+
+    });
+
+    document.getElementById('payslip').addEventListener('change',function(event){
+        if(event.target.files[0])  document.getElementById('payslip-name').value = event.target.files[0].name
+        else  document.getElementById('payslip-name').value=''
+    })
 </script>
 @endsection

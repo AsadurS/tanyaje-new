@@ -1,4 +1,4 @@
-@extends('admin.layout')
+@extends('admin.agent.layout')
 @section('content')
     <div class="content-wrapper">
         <!-- Content Header (Page header) -->
@@ -53,7 +53,7 @@
 
                                         <!-- form start -->
                                         <div class="box-body">
-                                            {!! Form::open(array('url' =>'admin/updatesaleadvisor', 'method'=>'post', 'class' => 'form-horizontal form-validate', 'enctype'=>'multipart/form-data')) !!}
+                                            {!! Form::open(array('url' =>'agent/sales-advisor-update', 'method'=>'post', 'class' => 'form-horizontal form-validate', 'enctype'=>'multipart/form-data')) !!}
                                             <input class="form-control" id="saleAdvisor_id" name="saleAdvisor_id"
                                                    type="hidden" value="{{$result['sale_advisor'][0]->id}}">
                                             <h4>{{ trans('labels.SaleAdvisorInfo') }}</h4>
@@ -176,14 +176,14 @@
                                                     <span class="help-block hidden">{{ trans('labels.textRequiredFieldMessage') }}</span>
                                                 </div>
                                             </div>
-                                            <div class="form-group">
+                                            <div class="form-group" style="display: none">
                                                 <label for="verification" class="col-sm-2 col-md-2 control-label"
                                                        style="">{{ trans('labels.Verification') }}</label>
                                                 <div class="col-sm-10 col-md-3">
                                                     <select class="form-control" name="verified" id="verified">
                                                         <option value="2"
                                                                 @if($result['sale_advisor'][0]->verified == '2') selected @endif>
-                                                            Active
+                                                            N/A
                                                         </option>
                                                         <option value="1"
                                                                 @if($result['sale_advisor'][0]->verified == '1') selected @endif>
@@ -191,15 +191,7 @@
                                                         </option>
                                                         <option value="0"
                                                                 @if($result['sale_advisor'][0]->verified == '0') selected @endif>
-                                                            Inactive
-                                                        </option>
-                                                        <option value="3"
-                                                                @if($result['sale_advisor'][0]->verified == '3') selected @endif>
-                                                            Pending
-                                                        </option>
-                                                        <option value="4"
-                                                                @if($result['sale_advisor'][0]->verified == '4') selected @endif>
-                                                            Unpublished
+                                                            Unverified
                                                         </option>
                                                     </select>
                                                     <span class="help-block"
@@ -310,19 +302,6 @@
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label for="waze_url" class="col-sm-2 col-md-2 control-label"
-                                                       style="">{{ 'Agent'  }}</label>
-                                                <div class="col-sm-10 col-md-3">
-                                                    <select name="agent_id" id="agent"
-                                                            class="form-control field-validate select2">
-                                                        <option>Select Sales Agent</option>
-                                                        @foreach($result['agents'] as $agent)
-                                                            <option @if($result['sale_advisor'][0]->agent_id == $agent->id) selected
-                                                                    @endif  value="{{$agent->id}}">{{$agent->first_name}} {{$agent->last_name}}</option>
-                                                        @endforeach
-
-                                                    </select>
-                                                </div>
                                                 <label for="waze_url" class="col-sm-2 col-md-2 control-label"
                                                        style="">{{ 'Package'  }}</label>
                                                 <div class="col-sm-10 col-md-3">
@@ -641,11 +620,11 @@
                                                                 <tr>
                                                                     <td>
 @if (file_exists(public_path('/images/organisation/documents/'.$document->attachment)))
-                                                                    <a href="{{asset('images/organisation/documents/'.$document->attachment)}}" target="_blank">{{ $document->name }}</a> 
+                                                                    <a href="{{asset('images/organisation/documents/'.$document->attachment)}}" target="_blank">{{ $document->name }}</a>
 
 
                                                                 @else
-                                                                    <a href="{{ $document->attachment }}" target="_blank">{{ $document->name }}</a> 
+                                                                    <a href="{{ $document->attachment }}" target="_blank">{{ $document->name }}</a>
 
 
                                                                 @endif
@@ -1312,11 +1291,13 @@
     <script type="text/javascript">
         function htmlToExcel(table) {
             let name;
+            let admins = "<?php  $result['admins']; ?>"
+            console.log(admins,123)
+
             name = document.getElementById('package').value;
             var optionElement = document.getElementById('organisation_id').options[document.getElementById('organisation_id').selectedIndex];
             var optionName = optionElement.textContent;
             document.getElementById('organisation_id_name').innerText ="Dealer name: "+  optionName;
-           // document.getElementById('organisation_id_name').innerText ="Dealer name: "+  document.getElementById('organisation_id').options[document.getElementById('organisation_id').selectedIndex]
             document.getElementById('organisation_id_address').innerText = document.getElementById('address').value
             document.getElementById('name').innerText = 'ATTENTION: '+document.getElementById('merchant_name').value
             document.getElementById('phone').innerText = 'TEL: '+document.getElementById('merchant_phone_no').value
