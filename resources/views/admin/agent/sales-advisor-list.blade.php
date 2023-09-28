@@ -151,13 +151,13 @@
                                                             NA
                                                     @endif
                                                     <td>
-                                                        @if($merchant_branch->verified == '1')
-                                                            <i data-toggle="tooltip" data-placement="top" title="Verified" class="fa fa-check-circle" style="font-size:24px;color: #03b900;"></i>
-                                                        @elseif($merchant_branch->verified == '2')
-                                                            <i data-toggle="tooltip" data-placement="top" title="Active" class="fa fa-times-circle" style="font-size:24px;color:red;"></i>
-                                                        @elseif($merchant_branch->verified == '3')
-                                                        @elseif($merchant_branch->verified == '0')
+                                                        @if($merchant_branch->verified == '0')
                                                             <i data-toggle="tooltip" data-placement="top" title="Inactive" class="fa fa-times-circle" style="font-size:24px;color:red;"></i>
+                                                        @elseif($merchant_branch->verified == '1')
+                                                            <i data-toggle="tooltip" data-placement="top" title="Verified" class="fa fa-check" style="font-size:24px;color:green;"></i>
+                                                        @elseif($merchant_branch->verified == '2')
+                                                            <i data-toggle="tooltip" data-placement="top" title="Active" class="fa fa-check-square" style="font-size:24px;color:green;"></i>
+
                                                         @elseif($merchant_branch->verified == '3')
                                                             <i data-toggle="tooltip" data-placement="top" title="Pending" class="fa fa-bell" style="font-size:24px;color:#ffc107!important;"></i>
                                                         @else
