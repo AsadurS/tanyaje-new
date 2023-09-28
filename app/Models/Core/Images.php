@@ -21,7 +21,8 @@ public $sortable =['id','name'];
 
     public function getimages(){
 
-    if (Auth()->user()->role_id == \App\Models\Core\User::ROLE_MERCHANT) {
+        $check = Auth()->user()->role_id??null;
+    if ($check == \App\Models\Core\User::ROLE_MERCHANT) {
         $allimagesth = DB::table('images')
             ->leftJoin('image_categories', 'images.id', '=', 'image_categories.image_id')
             ->select('path', 'images.id', 'image_type')

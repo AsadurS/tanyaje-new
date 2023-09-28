@@ -2196,7 +2196,7 @@ class SaleAdvisorController extends Controller
             $saleAdvisor = SaleAdvisor::where('id',$id)->with('user')->first();
            if($saleAdvisor->user){
                try {
-                   Mail::to($saleadvisor->merchant_email)->send(new ToAgentSend($data, true));
+                   Mail::to($saleAdvisor->user->email)->send(new ToAgentSend($saleAdvisor, false));
                }catch(\Exception $exception){
                    Log::error($exception);
                }

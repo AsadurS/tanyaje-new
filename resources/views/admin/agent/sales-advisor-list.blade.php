@@ -152,14 +152,17 @@
                                                     @endif
                                                     <td>
                                                         @if($merchant_branch->verified == '1')
-                                                            <i data-toggle="tooltip" data-placement="top" title="Active" class="fa fa-check-circle" style="font-size:24px;color: #03b900;"></i>
+                                                            <i data-toggle="tooltip" data-placement="top" title="Verified" class="fa fa-check-circle" style="font-size:24px;color: #03b900;"></i>
+                                                        @elseif($merchant_branch->verified == '2')
+                                                            <i data-toggle="tooltip" data-placement="top" title="Active" class="fa fa-times-circle" style="font-size:24px;color:red;"></i>
+                                                        @elseif($merchant_branch->verified == '3')
                                                         @elseif($merchant_branch->verified == '0')
                                                             <i data-toggle="tooltip" data-placement="top" title="Inactive" class="fa fa-times-circle" style="font-size:24px;color:red;"></i>
                                                         @elseif($merchant_branch->verified == '3')
                                                             <i data-toggle="tooltip" data-placement="top" title="Pending" class="fa fa-bell" style="font-size:24px;color:#ffc107!important;"></i>
                                                         @else
                                                             <!-- <i class="fa fa-battery-empty" style="font-size:24px;color:grey;"></i> -->
-                                                            <i data-toggle="tooltip" data-placement="top" title="Unverified" class='fa fa-question-circle ' style="font-size:24px;color:grey;"></i>
+                                                            <i data-toggle="tooltip" data-placement="top" title="Unpublished" class='fa fa-question-circle ' style="font-size:24px;color:grey;"></i>
                                                         @endif
                                                     </td>
                                                     <td>
@@ -167,9 +170,15 @@
                                                     </td>
                                                     <td>
                                                         @if($merchant_branch->is_default==1)
-                                                            <strong class="badge bg-green">{{trans('labels.Active')}} </strong>
+                                                            <strong class="badge bg-green">Verified </strong>
+                                                        @elseif($merchant_branch->is_default==0)
+                                                        <strong class="badge bg-green">Inactive </strong>
+                                                        @elseif($merchant_branch->is_default==2)
+                                                        <strong class="badge bg-green">Active </strong>
+                                                        @elseif($merchant_branch->is_default==3)
+                                                                        <strong class="badge bg-green">Pending </strong>
                                                         @else
-                                                            <strong class="badge bg-light-grey">{{trans('labels.InActive')}} </strong>
+                                                            <strong class="badge bg-light-grey">Unpublished </strong>
                                                         @endif
                                                     </td>
                                                     <td>
