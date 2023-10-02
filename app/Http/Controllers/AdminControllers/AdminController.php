@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers\AdminControllers;
+use App\Agent;
 use App\Models\Core\Languages;
 use App\Models\Core\Setting;
 use App\Models\Admin\Admin;
@@ -3023,4 +3024,220 @@ class AdminController extends Controller
     }
 
 	// end of template manager----------------------------------------------------------------------------------------------------------
+    //Agent
+    public function agents(Request $request){
+
+        $title = array('pageTitle' => Lang::get("labels.ListingManagers"));
+        $language_id = '1';
+
+        $result = array();
+        $message = array();
+        $errorMessage = array();
+
+        $admins = DB::table('users')
+            ->leftJoin('user_types','user_types.user_types_id','=','users.role_id')
+            ->select('users.*','user_types.*')
+            ->where('users.role_id','=',Agent::ROLE_ID)
+            ->paginate(50);
+
+
+        $result['message'] = $message;
+        $result['errorMessage'] = $errorMessage;
+        $result['admins'] = $admins;
+
+        return view("admin.agent.admin-agent-index",$title)->with('result', $result);
+
+    }
+    public function addAgents(Request $request){
+
+        $title = array('pageTitle' => Lang::get("labels.addmanager"));
+
+        $result = array();
+        $message = array();
+        $errorMessage = array();
+        $images = new Images;
+        $allimage = $images->getimages();
+        //get function from ManufacturerController controller
+        $myVar = new AddressController();
+        $result['countries'] = $myVar->getAllCountries();
+        $state = $this->States->getter();
+        $result['state'] = $state;
+        $city = $this->Cities->getter();
+        $result['city'] = $city;
+        $adminTypes = DB::table('user_types')
+            ->where('isActive', 1)
+            ->where('user_types_id','=',User::ROLE_MANAGER)
+            ->get();
+        $result['adminTypes'] = $adminTypes;
+
+        return view("admin.managers.add",$title)->with('result', $result)->with('allimage',$allimage);
+
+    }
+
+    //edit manager
+    public function editAgent(Request $request)
+    {
+        //role manager can not edit other manager info
+        if( Auth()->user()->role_id == \App\Models\Core\User::ROLE_MERCHANT &&  $request->id != Auth()->user()->id )
+        {
+            return  redirect('not_allowed');
+        }
+
+        $title = array('pageTitle' => Lang::get("labels.EditManager"));
+        $myid = $request->id;
+
+        $result = array();
+        $message = array();
+        $errorMessage = array();
+        $images = new Images;
+        $allimage = $images->getimages();
+
+        //get function from other controller
+        $myVar = new AddressController();
+        $result['countries'] = $myVar->getAllCountries();
+        $adminTypes = DB::table('user_types')->where('isActive', 1)
+            ->where('user_types_id','=','13')
+            ->get();
+        $state = $this->States->getter();
+        $result['state'] = $state;
+        $city = $this->Cities->getter();
+        $result['city'] = $city;
+
+        $result['adminTypes'] = $adminTypes;
+
+        $result['myid'] = $myid;
+
+        $admins = DB::table('users')->where('id','=', $myid)->get();
+        $zones = 0;
+
+        $user_to_address = DB::table('user_to_address')->where('user_id','=', $admins[0]->id)->get();
+        if(count($user_to_address)>0){
+            $address = DB::table('address_book')->where('address_book_id','=', $user_to_address[0]->address_book_id)->get();
+        }else{
+            $address = array();
+        }
+        $result['address'] = $address;
+
+        if($zones>0){
+            $result['zones'] = $zones;
+        }else{
+            $zones = new \stdClass;
+            $zones->zone_id = "others";
+            $zones->zone_name = "Others";
+            $result['zones'][0] = $zones;
+        }
+        //echo "a";exit();
+        //$image_path = DB::table('image_categories')->where('image_id', $admins[0]->ssm)->where('image_type', 'ACTUAL')->get();
+        //echo "a";echo "<pre>";print_r($image_path);echo "</pre>";echo $admins[0]->ssm;exit();
+        $result['admins'] = $admins;
+        //$result['image_path'] = $image_path;
+        return view("admin.managers.edit",$title)->with('result', $result)->with('allimage', $allimage);
+    }
+
+    //update manager
+    public function updateAgent(Request $request)
+    {
+        //get function from other controller
+        $myVar = new SiteSettingController();
+        $extensions = $myVar->imageType();
+        $myid = $request->myid;
+        $result = array();
+        $message = array();
+        $errorMessage = array();
+        if($request->image_avatar!==null){
+            $members_picture = $request->image_avatar;
+        }	else{
+            $members_picture = $request->oldImage;
+        }
+
+        //check email already exists
+        $existEmail = DB::table('users')->where([['email','=',$request->email],['id','!=',$myid]])->get();
+        if(count($existEmail)>0)
+        {
+            $errorMessage = Lang::get("labels.Email address already exist");
+            return redirect()->back()->with('errorMessage', $errorMessage);
+        }
+        else
+        {
+
+            $uploadImage = '';
+            //default_manager_id
+            $request->adminType=\App\Models\Core\User::ROLE_MANAGER;
+            $admin_data = array(
+                'first_name'		 		=>   $request->first_name,
+                'last_name'			 		=>   $request->last_name,
+                'phone'	 					=>	 $request->phone,
+                'email'	 					=>   $request->email,
+                'status'		 	 		=>   $request->isActive,
+                'avatar'	 				=>	 $uploadImage,
+                'role_id'	 				=>	 $request->adminType,
+                'updated_at'				=>   date('Y-m-d H:i:s'),
+            );
+
+            if($request->changePassword == 'yes'){
+                $admin_data['password'] = Hash::make($request->password);
+            }
+
+            $customers_id = DB::table('users')->where('id', '=', $myid)->update($admin_data);
+
+            //if($request->address){
+            $checkUserAddress = DB::table('user_to_address')->where('user_id', '=', $myid)->get();
+            if(count($checkUserAddress)>0){
+                $address_data = array(
+                    'entry_street_address'		=>   $request->address,
+                    'entry_postcode'		 	=>   $request->zip,
+                    'entry_city'			 	=>   $request->city,
+                    'entry_country_id'	 		=>	 $request->country,
+                    'entry_state'	 			=>   $request->state,
+                );
+                $address_id = DB::table('address_book')->where('address_book_id', '=', $checkUserAddress[0]->address_book_id)->update($address_data);
+            }else{
+                if($request->address){
+                    if(empty($request->zip)){
+                        $request->zip = "";
+                    }
+                    if(empty($request->city)){
+                        $request->city = "";
+                    }
+                    if(empty($request->country)){
+                        $request->country = 0;
+                    }
+                    if(empty($request->state)){
+                        $request->state = NULL;
+                    }
+                    //insert address book
+                    $address_book = DB::table('address_book')->insertGetId([
+                        'entry_street_address'		=>   $request->address,
+                        'entry_postcode'		 	=>   $request->zip,
+                        'entry_city'			 	=>   $request->city,
+                        'entry_country_id'	 		=>	 $request->country,
+                        'entry_state'	 			=>   $request->state
+                    ]);
+
+                    $user_to_address = DB::table('user_to_address')->insertGetId([
+                        'user_id'		 			=>   $myid,
+                        'address_book_id'		 	=>   $address_book
+                    ]);
+                }
+            }
+
+            $message = Lang::get("labels.Manager has been updated successfully");
+            return redirect()->back()->with('message', $message);
+        }
+
+    }
+
+    //delete manager
+    public function deleteAgent(Request $request){
+        $myid = $request->users_id;
+        DB::table('users')->where('id','=', $myid)->delete();
+        $checkUserAddress = DB::table('user_to_address')->where('user_id', '=', $myid)->get();
+        if(count($checkUserAddress)>0){
+            DB::table('address_book')->where('address_book_id','=', $checkUserAddress[0]->address_book_id)->delete();
+            DB::table('user_to_address')->where('id','=', $checkUserAddress[0]->id)->delete();
+        }
+        return redirect()->back()->withErrors([Lang::get("labels.DeleteManagerMessage")]);
+    }
+    //end agent
+
 }
