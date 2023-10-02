@@ -770,6 +770,7 @@ Route::group(['prefix'=>'admin/banners','middleware' => 'auth','namespace' => 'A
     Route::post('admin/sale_advisors/deletecampaigns', 'SaleAdvisorController@deletecampaigns');
     Route::get('admin/sale_advisors/filtercampaign', 'SaleAdvisorController@campaigns');
     Route::post('admin/sale_advisors/{renew}/request/{id}', 'SaleAdvisorController@changeVerification');
+    Route::get('admin/sale_advisors/basic-info', 'SaleAdvisorController@basicInfo');
 
     // Campaign report
     Route::get('admin/sale_advisors/campaignreport', 'SaleAdvisorController@campaignreport');
