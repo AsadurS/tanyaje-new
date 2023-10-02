@@ -3025,7 +3025,8 @@ class AdminController extends Controller
 
 	// end of template manager----------------------------------------------------------------------------------------------------------
     //Agent
-    public function agents(Request $request){
+
+	public function agents(Request $request){
 
         $title = array('pageTitle' => Lang::get("labels.ListingManagers"));
         $language_id = '1';
@@ -3070,10 +3071,71 @@ class AdminController extends Controller
             ->get();
         $result['adminTypes'] = $adminTypes;
 
-        return view("admin.managers.add",$title)->with('result', $result)->with('allimage',$allimage);
+        return view("admin.agent.admin-agent-add",$title)->with('result', $result)->with('allimage',$allimage);
 
     }
+	public function addAgent(Request $request){
 
+        $title = array('pageTitle' => Lang::get("labels.addmanager"));
+
+        $result = array();
+        $message = array();
+        $errorMessage = array();
+        $images = new Images;
+        $allimage = $images->getimages();
+        //get function from ManufacturerController controller
+        $myVar = new AddressController();
+        $result['countries'] = $myVar->getAllCountries();
+        $state = $this->States->getter();
+        $result['state'] = $state;
+        $city = $this->Cities->getter();
+        $result['city'] = $city;
+        $adminTypes = DB::table('user_types')
+            ->where('isActive', 1)
+            ->where('user_types_id','=',User::ROLE_MANAGER)
+            ->get();
+        $result['adminTypes'] = $adminTypes;
+
+        return view("admin.agent.admin-agent-add",$title)->with('result', $result)->with('allimage',$allimage);
+
+    }
+	public function addNewAgent(Request $request){
+
+		//get function from other controller
+		$myVar = new SiteSettingController();
+		$extensions = $myVar->imageType();
+
+		$result = array();
+		$message = array();
+		$errorMessage = array();
+
+		//check email already exists
+		$existEmail = DB::table('users')->where('email', '=', $request->email)->get();
+		if(count($existEmail)>0){
+			$errorMessage = Lang::get("labels.Email address already exist");
+			return redirect()->back()->with('errorMessage', $errorMessage);
+		}else{
+
+			$uploadImage = '';
+
+			$customers_id = DB::table('users')->insertGetId([
+						'user_name'		 		    =>   $request->first_name.'_'.$request->last_name.time(),
+						'first_name'		 		=>   $request->first_name,
+						'last_name'			 		=>   $request->last_name,
+						'phone'	 					=>	 $request->phone,
+						'email'	 					=>   $request->email,
+						'password'		 			=>   Hash::make($request->password),
+						'status'		 	 		=>   $request->isActive,
+						'avatar'	 				=>	 $uploadImage,
+						'role_id'					=>	 Agent::ROLE_ID
+						]);
+
+
+			$message = Lang::get("New Agent has been added successfully");
+			return redirect()->back()->with('message', $message);
+
+		}
+	}
     //edit manager
     public function editAgent(Request $request)
     {
@@ -3131,7 +3193,7 @@ class AdminController extends Controller
         //echo "a";echo "<pre>";print_r($image_path);echo "</pre>";echo $admins[0]->ssm;exit();
         $result['admins'] = $admins;
         //$result['image_path'] = $image_path;
-        return view("admin.managers.edit",$title)->with('result', $result)->with('allimage', $allimage);
+        return view("admin.agent.admin-agent-edit",$title)->with('result', $result)->with('allimage', $allimage);
     }
 
     //update manager
@@ -3162,7 +3224,7 @@ class AdminController extends Controller
 
             $uploadImage = '';
             //default_manager_id
-            $request->adminType=\App\Models\Core\User::ROLE_MANAGER;
+      
             $admin_data = array(
                 'first_name'		 		=>   $request->first_name,
                 'last_name'			 		=>   $request->last_name,
@@ -3170,7 +3232,7 @@ class AdminController extends Controller
                 'email'	 					=>   $request->email,
                 'status'		 	 		=>   $request->isActive,
                 'avatar'	 				=>	 $uploadImage,
-                'role_id'	 				=>	 $request->adminType,
+                'role_id'	 				=>	Agent::ROLE_ID,
                 'updated_at'				=>   date('Y-m-d H:i:s'),
             );
 
@@ -3221,7 +3283,7 @@ class AdminController extends Controller
                 }
             }
 
-            $message = Lang::get("labels.Manager has been updated successfully");
+            $message = Lang::get("Agent has been updated successfully");
             return redirect()->back()->with('message', $message);
         }
 
@@ -3236,8 +3298,7 @@ class AdminController extends Controller
             DB::table('address_book')->where('address_book_id','=', $checkUserAddress[0]->address_book_id)->delete();
             DB::table('user_to_address')->where('id','=', $checkUserAddress[0]->id)->delete();
         }
-        return redirect()->back()->withErrors([Lang::get("labels.DeleteManagerMessage")]);
+        return redirect()->back()->withErrors(['Agent Delete Succesfully']);
     }
     //end agent
-
 }

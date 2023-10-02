@@ -725,12 +725,12 @@ Route::group(['prefix'=>'admin/banners','middleware' => 'auth','namespace' => 'A
       Route::post('/updatemanager', 'AdminController@updatemanager')->middleware('edit_manage_manager');
       Route::post('/deletemanager', 'AdminController@deletemanager')->middleware('delete_manage_manager');
       // agent
-      Route::get('/agent', 'AdminController@agents')->middleware('view_agent_manager');
-      Route::get('/add-agent', 'AdminController@addAgent')->middleware('add_agent_manager');
-      Route::post('/add-agent', 'AdminController@addAgent')->middleware('add_agent_manager');
-      Route::get('/edit-agent/{id}', 'AdminController@editAgent')->middleware('edit_agent_manager');
-      Route::post('/update-agent', 'AdminController@updateAgent')->middleware('edit_agent_manager');
-      Route::post('/delete-agent', 'AdminController@deleteAgent')->middleware('delete_agent_manager');
+      Route::get('/agents', 'AdminController@agents');
+      Route::get('/add-agent', 'AdminController@addAgent');
+      Route::post('/add-agent', 'AdminController@addNewAgent');
+      Route::get('/edit-agent/{id}', 'AdminController@editAgent');
+      Route::post('/update-agent', 'AdminController@updateAgent');
+      Route::post('/delete-agent', 'AdminController@deleteAgent');
 
       //Car Statistics report
       Route::get('statistics','CarsStatisticsController@index')->name('car_statistics');

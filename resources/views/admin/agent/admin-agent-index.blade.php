@@ -3,10 +3,10 @@
     <div class="content-wrapper">
         <!-- Content Header (Page header) -->
         <section class="content-header">
-            <h1> {{ trans('labels.managers') }} <small>{{ trans('labels.managers') }}...</small> </h1>
+            <h1> Agents<small>.Agents..</small> </h1>
             <ol class="breadcrumb">
                 <li><a href="{{ URL::to('admin/dashboard/this_month')}}"><i class="fa fa-dashboard"></i> {{ trans('labels.breadcrumb_dashboard') }}</a></li>
-                <li class="active">{{ trans('labels.managers') }}</li>
+                <li class="active">Agents</li>
             </ol>
         </section>
 
@@ -20,9 +20,9 @@
                 <div class="col-md-12">
                     <div class="box">
                         <div class="box-header">
-                            <h3 class="box-title">{{ trans('labels.managers') }} </h3>
+                            <h3 class="box-title">Agents </h3>
                             <div class="box-tools pull-right">
-                                <a href="{{ URL::to('admin/addmanagers')}}" type="button" class="btn btn-block btn-primary">{{ trans('labels.addmanagers') }}</a>
+                                <a href="{{ URL::to('admin/add-agent')}}" type="button" class="btn btn-block btn-primary">Add Agent</a>
                             </div>
                         </div>
 
@@ -71,7 +71,7 @@
                                                                 @else
                                                                     <strong class="badge bg-light-blue">
                                                                         @endif
-                                                                        {{$admin->user_types_name}}</strong>
+                                                                        Agent</strong>
                                                     </td>
                                                     <td>
                                                         @if($admin->status==1)
@@ -89,7 +89,7 @@
                                                                 </a>
                                                                 <ul class="dropdown-menu">
                                                                     <li role="presentation">
-                                                                        <a role="menuitem" tabindex="-1" href="editmanager/{{ $admin->id }}">{{ trans('labels.editmanager') }}</a>
+                                                                        <a role="menuitem" tabindex="-1" href="edit-agent/{{ $admin->id }}">Edit Agent</a>
                                                                     </li>
                                                                     <li role="presentation"></li>
                                                                     <li role="presentation" class="divider"></li>
@@ -136,11 +136,11 @@
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             <h4 class="modal-title" id="deleteAdminModalLabel">{{ trans('labels.Delete') }}</h4>
                         </div>
-                        {!! Form::open(array('url' =>'admin/deletemanager', 'name'=>'deleteManager', 'id'=>'deleteManager', 'method'=>'post', 'class' => 'form-horizontal', 'enctype'=>'multipart/form-data')) !!}
+                        {!! Form::open(array('url' =>'admin/delete-agent', 'name'=>'deleteManager', 'id'=>'deleteManager', 'method'=>'post', 'class' => 'form-horizontal', 'enctype'=>'multipart/form-data')) !!}
                         {!! Form::hidden('action', 'delete', array('class'=>'form-control')) !!}
                         {!! Form::hidden('users_id', '', array('class'=>'form-control', 'id'=>'users_id')) !!}
                         <div class="modal-body">
-                            <p>{{ trans('labels.DeleteManagerText') }}</p>
+                            <p>Are you sure you want to delete this agent?</p>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">{{ trans('labels.Close') }}</button>

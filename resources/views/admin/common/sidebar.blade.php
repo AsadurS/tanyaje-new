@@ -18,6 +18,16 @@
               <i class="fa fa-dashboard"></i> <span>{{ trans('labels.header_dashboard') }}</span>
             </a>
           </li>
+                  <li class="treeview {{ Request::is('admin/sale_advisors/dashboard') ? 'active' : '' }}">
+                      <a href="{{ URL::to('admin/sale_advisors/dashboard')}}">
+                          <i class="fa fa-dashboard"></i> <span>{{ trans('labels.header_dashboard') }}</span>
+                      </a>
+                  </li>
+                  <li class="treeview {{ Request::is('admin/sale_advisors/dashboard') ? 'active' : '' }}">
+                    <a href="{{ URL::to('admin/sale_advisors/basic-info')}}">
+                  <i class="fa fa-user"></i> <span>Basic Info</span>
+            </a>
+          </li>
           @else
           <li class="treeview {{ Request::is('admin/dashboard') ? 'active' : '' }}">
             <a href="{{ URL::to('admin/dashboard/this_month')}}">
@@ -72,6 +82,12 @@
                   <i class="fa fa-circle-o" aria-hidden="true"></i> <span> File Manager </span>
               </a>
           </li>
+          <li class="{{ Request::is('admin/agents') ? 'active' : '' }} {{ Request::is('admin/add-agents') ? 'active' : '' }} {{ Request::is('admin/edit-agent/*') ? 'active' : '' }}">
+                  <a href="{{ URL::to('admin/agents')}}">
+                      <i class="fa fa-circle-o"></i>
+                      Agents
+                  </a>
+              </li>
         </ul>
       </li>
 
@@ -651,6 +667,12 @@
                   <a href="{{ URL::to('admin/managers')}}">
                       <i class="fa fa-circle-o"></i>
                       {{ trans('labels.link_managers') }}
+                  </a>
+              </li>
+              <li class="{{ Request::is('admin/agents') ? 'active' : '' }} {{ Request::is('admin/addmanagers') ? 'active' : '' }} {{ Request::is('admin/editmanager/*') ? 'active' : '' }}">
+                  <a href="{{ URL::to('admin/agents')}}">
+                      <i class="fa fa-circle-o"></i>
+                      Agents
                   </a>
               </li>
 
