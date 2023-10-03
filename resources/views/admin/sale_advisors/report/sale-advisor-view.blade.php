@@ -112,6 +112,7 @@
                                             <td>Expired date:</td>
                                             <td>{{\Carbon\Carbon::parse($user->verified_since)->format('m/d/Y')}}</td>
                                         </tr>
+                                        @if($user->package)
                                         <tr>
                          <td></td>
                           <td><button onclick="htmlToExcel('excel-table')" type="button" class="btn btn-primary filterBun"
@@ -119,30 +120,22 @@
                               Download Invoice
                               </button></td>
                       </tr>
-                    <tr>
-                        <td></td>
-                        <td> {!! Form::open(array('url' =>"admin/sale_advisors/renew/request/$user->id", 'method'=>'post', 'class' => 'form-horizontal form-validate ', 'enctype'=>'multipart/form-data'))  !!}
-                    
-
-                    </h3>
-                    <div class="form-group">
-                        <label for="payslip" class="col-sm-2 col-md-2 control-label" style="">Payslip</label>
-                        <div class="col-sm-10 col-md-3">
-                            <!-- <input type="file" name="profile_img" id="profile_img" class="form-control"> -->
-                           
-
-
+                                        @endif
+                                        @if($user->payslip)
+                                        <tr>
+                        <td>Payslip</td>
+                        <td> {!! Form::open(array('url' =>"admin/sale_advisors/delete/payslip/$user->id", 'method'=>'post', 'class' => 'form-horizontal form-validate ', 'enctype'=>'multipart/form-data'))  !!}
                         <button type="submit"  class="btn  btn-danger filterBun">Delete Payslip</button>
-                    </div>
 
-                    {!! Form::close() !!}</td>
+                    {!! Form::close() !!}
+                    <button type="submit"  class="btn  btn-info filterBun">Show Payslip</button>
+                   </td>
                     </tr>
+                    @endif
                                     </table>
                                     @if($user->verified==0)
                   {!! Form::open(array('url' =>"admin/sale_advisors/renew/request/$user->id", 'method'=>'post', 'class' => 'form-horizontal form-validate ', 'enctype'=>'multipart/form-data'))  !!}
-                    <h3 >You are currently inactive if you want to be active please click the renew button with payslip.
-
-                    </h3>
+                   
                     <div class="form-group">
                         <label for="payslip" class="col-sm-2 col-md-2 control-label" style="">Payslip</label>
                         <div class="col-sm-10 col-md-3">

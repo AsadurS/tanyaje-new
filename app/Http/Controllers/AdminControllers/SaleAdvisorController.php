@@ -2208,4 +2208,36 @@ class SaleAdvisorController extends Controller
        }
        return \redirect()->back();
     }
+
+	public function basicInfo(){
+		$user = DB::table('merchant_branch')
+		->leftjoin('states', 'states.state_id','=','merchant_branch.state_id')
+		->leftJoin('cities', 'cities.city_id', '=', 'merchant_branch.city_id')
+		->where('id', Auth::guard('saleadvisor')->user()->id)
+		->select('merchant_branch.*', 'cities.city_name', 'states.state_name')
+		->first();
+	
+		$admin = User::where('id',$user->user_id)->first();
+
+		return view('admin.sale_advisors.report.sale-advisor-view', compact('user','admin'));
+	    
+	 }
+	 public function payslipDelete(Request $request, $id)
+    {
+
+        try{
+		   $sales= SaleAdvisor::find($id);
+		   if($sales->payslip){
+			file_exists(public_path("/payslip/".$sales->payslip));
+			unlink(public_path("/payslip/".$sales->payslip));
+		}
+               SaleAdvisor::where('id',$id)->where('verified',0)->update([
+                   'payslip' =>null,
+               ]);
+			  
+           }catch(Exception $e){
+           Log::error($e);
+       }
+       return \redirect()->back();
+    }
 }
