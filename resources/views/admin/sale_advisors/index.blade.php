@@ -171,17 +171,7 @@
                                                         {{ $merchant_branch->hits }}
                                                     </td>
                                                     <td>
-                                                        @if($merchant_branch->is_default==1)
-                                                            <strong class="badge bg-green">Verified </strong>
-                                                            @if($merchant_branch->is_default==0)
-                                                                <strong class="badge bg-green">Inactive </strong>
-                                                                @if($merchant_branch->is_default==2)
-                                                                    <strong class="badge bg-green">Active </strong>
-                                                                    @if($merchant_branch->is_default==3)
-                                                                        <strong class="badge bg-green">Pending </strong>
-                                                                    @else
-                                                                        <strong class="badge bg-light-grey">Unpublished </strong>
-                                                                    @endif
+
                                                     </td>
                                                     <td>
                                                         <!-- <a class="badge bg-green" href="{!! route('copy_merchant_cars',['branch_id' => $merchant_branch->id,'user_id' => $data['user_id']]) !!}" ><i class="fa fa-copy" aria-hidden="true"></i></a> -->

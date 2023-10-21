@@ -636,12 +636,13 @@ class SaleAdvisorController extends Controller
 	}
 
 	public function dashboard(){
-		// dd(Auth::guard('saleadvisor')->user());
+
 		return view("admin.sale_advisors.dashboard");
 	}
 
 	// sa campaign start ---------------------------------------------------
 	public function campaigns(Request $request){
+        return Auth::guard('saleadvisor')->user();
 		$title = array('pageTitle' => Lang::get("labels.ListingBanks"));
 		$language_id = '1';
 
@@ -758,6 +759,7 @@ class SaleAdvisorController extends Controller
     }
 
 	public function editcampaigns(Request $request){
+
 		$title = array('pageTitle' => Lang::get("labels.add_campaign"));
 		$myid = $request->id;
 
@@ -817,7 +819,7 @@ class SaleAdvisorController extends Controller
 
 	// sa campaign report
 	public function campaignreport(Request $request){
-
+      ;
 		$title = array('pageTitle' => Lang::get("labels.titleCampaignReport"));
 		$language_id = '1';
 		$images = new Images;
@@ -2231,7 +2233,7 @@ class SaleAdvisorController extends Controller
 			file_exists(public_path("/payslip/".$sales->payslip));
 			unlink(public_path("/payslip/".$sales->payslip));
 		}
-               SaleAdvisor::where('id',$id)->where('verified',0)->update([
+               SaleAdvisor::where('id',$id)->update([
                    'payslip' =>null,
                ]);
 			  

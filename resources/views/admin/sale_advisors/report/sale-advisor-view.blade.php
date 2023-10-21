@@ -114,7 +114,7 @@
                                         </tr>
                                         @if($user->package)
                                         <tr>
-                         <td></td>
+                         <td>Package: <b> {{$user->package}}</b></td>
                           <td><button onclick="htmlToExcel('excel-table')" type="button" class="btn btn-primary filterBun"
                               data-toggle="modal"  style="">
                               Download Invoice
@@ -128,7 +128,44 @@
                         <button type="submit"  class="btn  btn-danger filterBun">Delete Payslip</button>
 
                     {!! Form::close() !!}
-                    <button type="submit"  class="btn  btn-info filterBun">Show Payslip</button>
+                            @if($user->payslip)
+                                <button type="button" for="payslip" class="btn btn-info"
+                                        data-toggle="modal" data-target="#myModal" style="">show
+                                    payslip
+                                </button>
+
+                                <!-- Modal -->
+                                <div id="myModal" class="modal fade" role="dialog">
+                                    <div class="modal-dialog modal-lg">
+
+                                        <!-- Modal content-->
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close"
+                                                        data-dismiss="modal">&times;
+                                                </button>
+                                                <h4 class="modal-title">Modal Header</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                @if( strpos($user->payslip, 'pdf'))
+                                                    <embed src="{{url('payslip/'.$user->payslip)}}"
+                                                           frameborder="0" width="100%"
+                                                           height="400px">
+                                                @else
+                                                    <img src="{{url('payslip/'.$user->payslip)}}"
+                                                         alt="">
+                                                @endif
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default"
+                                                            data-dismiss="modal">Close
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                    </td>
                     </tr>
                     @endif
@@ -453,7 +490,7 @@
             function htmlToExcel(table) {
                 let name;
 
-                name ="Basic";
+                name ="<?php echo $user->package; ?>";
 
                 document.getElementById('organisation_id_name').innerText ="<?php echo $admin->company_name??'';?>"
                 document.getElementById('organisation_id_address').innerText = "<?php echo $user->address;?>"

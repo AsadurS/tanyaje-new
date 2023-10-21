@@ -1283,28 +1283,28 @@
         }
     </script>
     <script>
-        $(document).ready(function () {
-
-            $('#verified-until').on('change', function () {
-                let selectedDate = $(this).val().split('-');
-
-                //let todayDate = new Date().getDate();
-                let todayDate = new Date().toLocaleDateString().split('/').reverse();
-                if (Number(selectedDate[0]) > Number(todayDate[0])) {
-                    document.getElementById('verified').value = 1
-                } else if (Number(selectedDate[0]) === Number(todayDate[0])) {
-                    if (Number(selectedDate[1]) > Number(todayDate[2])) {
-                        document.getElementById('verified').value = 1
-                    } else if (Number(selectedDate[1]) === Number(todayDate[2])) {
-                        if (Number(selectedDate[2]) >= Number(todayDate[1])) {
-                            document.getElementById('verified').value = 1
-                        }
-                    }
-                }
-
-                // You can perform any desired actions with the selected date here
-            });
-        });
+        // $(document).ready(function () {
+        //
+        //     $('#verified-until').on('change', function () {
+        //         let selectedDate = $(this).val().split('-');
+        //
+        //         //let todayDate = new Date().getDate();
+        //         let todayDate = new Date().toLocaleDateString().split('/').reverse();
+        //         if (Number(selectedDate[0]) > Number(todayDate[0])) {
+        //             document.getElementById('verified').value = 1
+        //         } else if (Number(selectedDate[0]) === Number(todayDate[0])) {
+        //             if (Number(selectedDate[1]) > Number(todayDate[2])) {
+        //                 document.getElementById('verified').value = 1
+        //             } else if (Number(selectedDate[1]) === Number(todayDate[2])) {
+        //                 if (Number(selectedDate[2]) >= Number(todayDate[1])) {
+        //                     document.getElementById('verified').value = 1
+        //                 }
+        //             }
+        //         }
+        //
+        //         // You can perform any desired actions with the selected date here
+        //     });
+        // });
     </script>
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"
             integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>

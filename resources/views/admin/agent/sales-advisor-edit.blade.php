@@ -68,29 +68,6 @@
                                                            value="{{$result['sale_advisor'][0]->id}}"
                                                            class="form-control" readonly>
                                                 </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="profile_photo" class="col-sm-2 col-md-2 control-label"
-                                                       style="">{{ trans('labels.ProfilePhoto') }}</label>
-                                                <div class="col-sm-10 col-md-3">
-                                    <span style="display:flex;">
-                                        <input type="text" id="profile_img" class="form-control" name="profile_img"
-                                               readonly="readonly" aria-label="Image" aria-describedby="button-image"
-                                               value="{{ $result['sale_advisor'][0]->profile_img }}">
-                                        <button class="btn btn-outline-secondary" type="button"
-                                                id="button-image-profile_img">Select</button>
-                                    </span>
-                                                    @if($result['sale_advisor'][0]->profile_img)
-                                                        <br>
-                                                        @if (file_exists(public_path('/images/sale-advisor/'.$result['sale_advisor'][0]->profile_img)))
-                                                            <img src="{{asset('/images/sale-advisor/'.$result['sale_advisor'][0]->profile_img)}}"
-                                                                 width="50%" alt="main image">
-                                                        @else
-                                                            <img src="{{ $result['sale_advisor'][0]->profile_img }}"
-                                                                 width="100px" alt="">
-                                                        @endif
-                                                    @endif
-                                                </div>
                                                 <label for="profile_photo" class="col-sm-2 col-md-2 control-label"
                                                        style="">{{ trans('labels.Organisation') }}</label>
                                                 <div class="col-sm-10 col-md-3">
@@ -112,6 +89,30 @@
                                                           style="font-weight: normal;font-size: 11px;margin-bottom: 0;">{{ trans('labels.SelectOrganisationText') }}</span>
                                                     <span class="help-block hidden">{{ trans('labels.textRequiredFieldMessage') }}</span>
                                                 </div>
+                                            </div>
+                                            <div class="form-group" >
+                                                <label style="display: none" for="profile_photo" class="col-sm-2 col-md-2 control-label"
+                                                       style="">{{ trans('labels.ProfilePhoto') }}</label>
+                                                <div class="col-sm-10 col-md-3">
+                                    <span style="display:flex;">
+                                        <input type="text" id="profile_img" class="form-control" name="profile_img"
+                                               readonly="readonly" aria-label="Image" aria-describedby="button-image"
+                                               value="{{ $result['sale_advisor'][0]->profile_img }}" style="display: none">
+                                        <button class="btn btn-outline-secondary" type="button"
+                                                id="button-image-profile_img" style="display: none">Select</button>
+                                    </span>
+                                                    @if($result['sale_advisor'][0]->profile_img)
+                                                        <br>
+                                                        @if (file_exists(public_path('/images/sale-advisor/'.$result['sale_advisor'][0]->profile_img)))
+                                                            <img src="{{asset('/images/sale-advisor/'.$result['sale_advisor'][0]->profile_img)}}"
+                                                                 width="50%" alt="main image">
+                                                        @else
+                                                            <img src="{{ $result['sale_advisor'][0]->profile_img }}"
+                                                                 width="100px" alt="">
+                                                        @endif
+                                                    @endif
+                                                </div>
+
                                             </div>
                                             <div class="form-group">
                                                 <label for="contact" class="col-sm-2 col-md-2 control-label"
@@ -405,9 +406,9 @@
                                             </div>
 
                                             <br>
-                                            <h4>{{ trans('labels.LandingPage') }}</h4>
+                                            <h4 style="display: none">{{ trans('labels.LandingPage') }}</h4>
                                             <hr>
-                                            <div class="form-group">
+                                            <div class="form-group" style="display: none">
                                                 <div class="col-md-4">
                                                     <div class="form-group">
                                                         <label for="generate_qr" class="col-sm-2 col-md-6 control-label"

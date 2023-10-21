@@ -58,12 +58,31 @@
                                             <!-- <input class="form-control" id="merchant_name" name="user_id" type="hidden" value=""> -->
                                             <h4>{{ trans('labels.SaleAdvisorInfo') }}</h4>
                                             <hr>
+                                            <label for="profile_photo" class="col-sm-2 col-md-2 control-label"
+                                                   s>{{ trans('labels.Organisation') }}</label>
+                                            <div class="col-sm-10 col-md-3">
+                                                <select name="organisation_id" id="organisation_id"
+                                                        class="form-control field-validate select2">
+                                                    <option>Organisations</option>
+                                                    @if (count($result['admins']) > 0)
+                                                        @foreach ($result['admins']  as $key=>$admin)
+                                                            @if ($admin->company_name)
+                                                                <option value="{{ $admin->id }}"
+                                                                >{{ $admin->company_name }}</option>
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                                <span class="help-block"
+                                                      style="font-weight: normal;font-size: 11px;margin-bottom: 0;">{{ trans('labels.SelectOrganisationText') }}</span>
+                                                <span class="help-block hidden">{{ trans('labels.textRequiredFieldMessage') }}</span>
+                                            </div>
                                             <div class="form-group">
                                                 <label for="profile_img" class="col-sm-2 col-md-2 control-label"
-                                                       style="">{{ trans('labels.UploadProfilePhoto') }}</label>
+                                                       style="display: none">{{ trans('labels.UploadProfilePhoto') }}</label>
                                                 <div class="col-sm-10 col-md-3">
                                                     <!-- <input type="file" name="profile_img" id="profile_img" class="form-control"> -->
-                                                    <span style="display:flex;">
+                                                    <span style="display: none">
                                       <input type="text" id="profile_img" class="form-control" name="profile_img"
                                              readonly="readonly" aria-label="Image" aria-describedby="button-image"
                                              value="">
@@ -71,27 +90,10 @@
                                               id="button-image-profile_img">Select</button>
                                     </span>
                                                     <span class="help-block"
-                                                          style="font-weight: normal;font-size: 11px;margin-bottom: 0;">{{ trans('labels.UploadProfilePhotoText') }}</span>
+                                                          style="display: none">{{ trans('labels.UploadProfilePhotoText') }}</span>
                                                     <span class="help-block hidden">{{ trans('labels.textRequiredFieldMessage') }}</span>
                                                 </div>
-                                                <label for="profile_photo" class="col-sm-2 col-md-2 control-label"
-                                                       style="">{{ trans('labels.Organisation') }}</label>
-                                                <div class="col-sm-10 col-md-3">
-                                                    <select name="organisation_id" id="organisation_id"
-                                                            class="form-control field-validate select2">
-                                                        <option>Organisations</option>
-                                                        @if (count($result['admins']) > 0)
-                                                            @foreach ($result['admins']  as $key=>$admin)
 
-                                                                <option value="{{ $admin->id }}">{{ $admin->first_name }} {{ $admin->last_name }}</option>
-
-                                                            @endforeach
-                                                        @endif
-                                                    </select>
-                                                    <span class="help-block"
-                                                          style="font-weight: normal;font-size: 11px;margin-bottom: 0;">{{ trans('labels.SelectOrganisationText') }}</span>
-                                                    <span class="help-block hidden">{{ trans('labels.textRequiredFieldMessage') }}</span>
-                                                </div>
                                             </div>
                                             <div class="form-group">
                                                 <label for="contact" class="col-sm-2 col-md-2 control-label"
@@ -267,9 +269,9 @@
 
 
                                             <br>
-                                            <h4>{{ trans('labels.LandingPage') }}</h4>
+                                            <h4 style="display: none">{{ trans('labels.LandingPage') }}</h4>
                                             <hr>
-                                            <div class="form-group">
+                                            <div class="form-group" style="display: none">
                                                 <div class="col-md-5">
                                                     <div class="form-group">
                                                         <label for="generate_qr" class="col-sm-2 col-md-5 control-label"

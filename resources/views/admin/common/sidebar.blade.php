@@ -211,7 +211,7 @@
             </li>
           </ul>
         </li> -->
-      
+
       <li class="{{ Request::is('admin/merchants') ? 'active' : '' }} {{ Request::is('admin/addmerchants') ? 'active' : '' }} {{ Request::is('admin/editmerchant/*') ? 'active' : '' }}">
         <a href="{{ URL::to('admin/merchants')}}">
             <i class="fa fa-users"></i>
@@ -320,7 +320,7 @@
         <?php } ?>
       @endif
 
-        <?php 
+        <?php
           // if(Auth()->user()->role_id != \App\Models\Core\User::ROLE_MERCHANT || auth()->user()->report_view == 1 || Auth()->user()->role_id == \App\Models\Core\User::ROLE_MERCHANT){
             if($check->view_report_organisation == 1 || $check->view_report_sa == 1 || $check->view_report_item == 1 || $check->view_report_promotion == 1 || $check->view_report_campaign == 1 || $check->view_report_campaign_response == 1){
         ?>
@@ -334,12 +334,12 @@
                 if($check->view_report_organisation == 1){
               ?>
               @if(Auth::guard('saleadvisor')->check())
-                
+
                 @else
                 <li class="{{ Request::is('admin/organisationreport') ? 'active' : '' }} {{ Request::is('admin/filterorganisationreport') ? 'active' : '' }} "><a href="{{ URL::to('admin/organisationreport')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.linkSubOrg') }}</a></li>
                 @endif
-              
-              <?php 
+
+              <?php
                 }
                 if($check->view_report_sa == 1){
               ?>
@@ -348,7 +348,7 @@
                 @else
                 <li class="{{ Request::is('admin/salesreport') ? 'active' : '' }} {{ Request::is('admin/filtersalesreport') ? 'active' : '' }}"><a href="{{ URL::to('admin/salesreport')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.linkSubSales') }}</a></li>
                 @endif
-                
+
               <?php
                 }
                 if($check->view_report_item == 1){
@@ -358,7 +358,7 @@
                 @else
                 <li class="{{ Request::is('admin/itemreport') ? 'active' : '' }} {{ Request::is('admin/filteritemreport') ? 'active' : '' }}"><a href="{{ URL::to('admin/itemreport')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.linkSubItem') }}</a></li>
                 @endif
-              
+
               <?php
                 }
                 if($check->view_report_promotion == 1){
@@ -368,8 +368,8 @@
                 @else
                 <li class="{{ Request::is('admin/promotionreport') ? 'active' : '' }} {{ Request::is('admin/filterpromotionreport') ? 'active' : '' }}"><a href="{{ URL::to('admin/promotionreport')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.linkSubPromo') }}</a></li>
                 @endif
-              
-              <?php 
+
+              <?php
                 }
               ?>
               <?php
@@ -380,7 +380,7 @@
               @else
                 <li class="{{ Request::is('admin/campaignreport') ? 'active' : '' }} {{ Request::is('admin/filtercampaignreport') ? 'active' : '' }}"><a href="{{ URL::to('admin/campaignreport')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.linkSubCampaign') }}</a></li>
               @endif
-              
+
               <?php
                 }
                 if($check->view_report_campaign_response == 1){
@@ -390,13 +390,13 @@
               @else
                 <li class="{{ Request::is('admin/campaignsresponse') ? 'active' : '' }} {{ Request::is('admin/filtercampaignsresponse') ? 'active' : '' }}"><a href="{{ URL::to('admin/campaignsresponse')}}"><i class="fa fa-circle-o"></i> {{ trans('labels.linkSubCampaignResponse') }}</a></li>
               @endif
-              
-              <?php 
+
+              <?php
                 }
               ?>
             </ul>
           </li>
-          <?php 
+          <?php
           }
           ?>
 
@@ -491,7 +491,7 @@
               </li>
             @endif
           @endif
-          
+
           <?php
             }
             if($check->reports_view == 1){

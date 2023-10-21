@@ -56,7 +56,9 @@
                                         <option value="">Company Name</option>
                                         @if (count($data['admins']) > 0)
                                             @foreach ($data['admins']  as $key=>$admin)
-                                                <option value="{{ $admin->id }}">{{ $admin->company_name }}</option>
+                                                @if($admin->company_name)
+                                                 <option value="{{ $admin->id }}">{{ $admin->company_name }}</option>
+                                                @endif
                                             @endforeach
                                         @endif
                                     </select>

@@ -89,7 +89,7 @@ class AgentController extends Controller
                 $roleType= Agent::ROLE_ID;
                 if($agent->role_id === $roleType &&$agent->status==1){
 
-                return redirect()->intended('/sales-advisor')->with('agent', $agent);
+                return redirect()->intended('agent/sales-advisor')->with('agent', $agent);
                 }
             }else{
                 return redirect('agent/login')->with('loginError',Lang::get("labels.EmailPasswordIncorrectText"));
@@ -168,11 +168,12 @@ class AgentController extends Controller
         $merchantData['merchant_branch'] = $branch;
         //$merchantData['countries'] = $countries;
         $merchantData['user_id'] = $id;
-
+        $merchant = DB::table('merchant_branch')->where('agent_id', Auth::guard('agent')->user()->id)->pluck('user_id');
         $admins = User::sortable(['id'=>'DESC'])
             ->leftJoin('user_types','user_types.user_types_id','=','users.role_id')
             ->select('users.*','user_types.*')
             ->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
+            ->whereIn('users.id', $merchant)
             ->get();
         $merchantData['admins'] = $admins;
 
@@ -257,13 +258,8 @@ class AgentController extends Controller
             $filename = "";
         }
 
-        $admins = User::sortable(['id'=>'DESC'])
-            ->leftJoin('user_types','user_types.user_types_id','=','users.role_id')
-            ->select('users.*','user_types.*')
-            ->where('users.role_id','=',\App\Models\Core\User::ROLE_MERCHANT)
-            ->where('users.id','=',$request->organisation_id)
-            ->get();
-        $sa_profile_url = "/sale-advisor/".Str::slug($admins[0]->company_name,"-")."/".Str::slug($request->merchant_name,"-");
+        $admins = Auth::guard('agent')->user();
+        $sa_profile_url = "/sale-advisor/".Str::slug($admins->company_name,"-")."/".Str::slug($request->merchant_name,"-");
         // dd($sa_profile_url);
 
         $request->adminType= \App\Models\Core\SaleAdvisors::ROLE_SALESADVISOR;
@@ -298,7 +294,7 @@ class AgentController extends Controller
             'keepMe' => $request->keepMe,
             'campaign' => $request->campaign,
             'is_default' =>4,
-            'role_id' => 18,
+            'role_id' => $request->adminType,
             'password'	=>   Hash::make($request->password),
             'status' =>  '1',
             'created_at' => date('Y-m-d H:i:s'),
